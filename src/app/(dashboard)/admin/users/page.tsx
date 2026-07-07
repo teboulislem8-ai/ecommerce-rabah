@@ -54,7 +54,7 @@ export default async function AdminUsersPage({
   // Server-side auth check
   const currentUser = await getCurrentUser();
   if (!currentUser || currentUser.role !== "admin") {
-    redirect("/signin");
+    redirect("/");
   }
 
   // Parse search params safely on server

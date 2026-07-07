@@ -12,6 +12,7 @@ import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { processPendingOrder } from "@/utils/createCODOrder";
+import { updateProfileAction } from "@/app/actions/profile";
 
 const WILAYA_KEYS = [
   "01","02","03","04","05","06","07","08","09","10",
@@ -65,16 +66,18 @@ export function SignUpForm({ redirectTo }: { redirectTo?: string }) {
       if (signUpError) throw signUpError;
 
       if (data?.user) {
-        await supabase.from("profiles").upsert({
-          profile_id: data.user.id,
+        const result = await updateProfileAction({
           username: nameInput,
           phone: phoneInput,
           city: cityInput,
         });
+        if (!result.success) {
+          console.error("Profile creation error:", result.error);
+        }
       }
 
       if (data?.user) {
-        const waUrl = await processPendingOrder(data.user.id);
+        const waUrl = await processPendingOrder();
         if (waUrl) {
           window.location.href = waUrl;
           return;

@@ -6,6 +6,10 @@ import {
 	useQueryClient,
 	UseQueryOptions,
 } from '@tanstack/react-query'
+import {
+	updateOrderStatusAction,
+	deleteOrderAction,
+} from '@/app/actions/order-status'
 
 // Query Keys
 export const orderKeys = {
@@ -70,13 +74,11 @@ export function useCreateOrder() {
 	return useMutation({
 		mutationFn: orderService.createOrder,
 		onSuccess: (_data, variables) => {
-			// Invalidate orders list for the user
 			if (variables.userId) {
 				queryClient.invalidateQueries({
 					queryKey: orderKeys.list(variables.userId),
 				})
 			}
-			// Also invalidate all orders lists
 			queryClient.invalidateQueries({
 				queryKey: orderKeys.lists(),
 			})
@@ -84,7 +86,7 @@ export function useCreateOrder() {
 	})
 }
 
-// Update order status mutation
+// Update order status mutation (uses Server Action)
 export function useUpdateOrderStatus() {
 	const queryClient = useQueryClient()
 
@@ -96,15 +98,17 @@ export function useUpdateOrderStatus() {
 			orderId: number
 			status: string
 		}) => {
-			return orderService.updateOrderStatus(String(orderId), status)
+			const result = await updateOrderStatusAction({ orderId, status })
+			if (!result.success) {
+				throw new Error(result.error)
+			}
+			return result.data
 		},
 		onSuccess: (data) => {
 			if (data) {
-				// Invalidate specific order
 				queryClient.invalidateQueries({
-					queryKey: orderKeys.detail(String(data.id)),
+					queryKey: orderKeys.detail(String((data as { id: number }).id)),
 				})
-				// Invalidate all orders lists
 				queryClient.invalidateQueries({
 					queryKey: orderKeys.lists(),
 				})
@@ -113,7 +117,7 @@ export function useUpdateOrderStatus() {
 	})
 }
 
-// Delete order mutation
+// Delete order mutation (uses Server Action)
 export function useDeleteOrder() {
 	const queryClient = useQueryClient()
 
@@ -125,25 +129,24 @@ export function useDeleteOrder() {
 			orderId: string
 			userId?: string
 		}) => {
-			await orderService.deleteOrder(orderId)
+			const result = await deleteOrderAction({ orderId: Number(orderId) })
+			if (!result.success) {
+				throw new Error(result.error)
+			}
 			return { orderId, userId }
 		},
 		onSuccess: (_, variables) => {
-			// Invalidate specific order
 			queryClient.invalidateQueries({
 				queryKey: orderKeys.detail(variables.orderId),
 			})
-			// If userId provided, invalidate that user's orders list
 			if (variables.userId) {
 				queryClient.invalidateQueries({
 					queryKey: orderKeys.list(variables.userId),
 				})
 			}
-			// Invalidate all orders lists
 			queryClient.invalidateQueries({
 				queryKey: orderKeys.lists(),
 			})
 		},
 	})
 }
-

@@ -14,7 +14,7 @@ export const profileKeys = {
   lists: () => [...profileKeys.all, 'list'] as const,
   details: () => [...profileKeys.all, 'detail'] as const,
   detail: (id: string) => [...profileKeys.details(), id] as const,
-  current: () => [...profileKeys.all, 'current'] as const,
+  current: (...args: string[]) => [...profileKeys.all, 'current', ...args] as const,
 };
 
 // Get profile by ID
@@ -39,10 +39,12 @@ export function useCurrentProfile(
     queryFn: getClientUser,
   });
 
+  const userId = userQuery.data?.id ?? '';
+
   return useQuery({
-    queryKey: profileKeys.current(),
+    queryKey: profileKeys.current(userId),
     queryFn: () => profileService.getCurrentProfile(),
-    enabled: !!userQuery.data,
+    enabled: !!userId,
     ...options,
   });
 }
@@ -66,8 +68,8 @@ export function useUpdateProfile() {
       queryClient.invalidateQueries({
         queryKey: profileKeys.detail(variables.userId),
       });
-      // Invalidate current profile query if updated profile is the current user's
-      queryClient.invalidateQueries({ queryKey: profileKeys.current() });
+      // Invalidate current profile query scoped to this user
+      queryClient.invalidateQueries({ queryKey: profileKeys.current(variables.userId) });
     },
   });
 }
@@ -78,11 +80,14 @@ export function useUpdateCurrentProfile() {
 
   return useMutation({
     mutationFn: async (data: Partial<ProfileType>) => {
-      return profileService.updateCurrentProfile(data);
+      const profile = await profileService.updateCurrentProfile(data);
+      return profile;
     },
-    onSuccess: () => {
-      // Invalidate current profile query
-      queryClient.invalidateQueries({ queryKey: profileKeys.current() });
+    onSuccess: (profile) => {
+      // Invalidate current profile query scoped to the user
+      if (profile?.profile_id) {
+        queryClient.invalidateQueries({ queryKey: profileKeys.current(profile.profile_id) });
+      }
     },
   });
 }

@@ -12,7 +12,7 @@ export function Navbar() {
         </div>
 
         <Link href="/" className="flex cursor-pointer items-center">
-          <Image src="/logo.svg" alt="" width={288} height={96} className="h-24 w-auto brightness-0 invert" priority />
+          <Image src="/logo.svg" alt="" width={288} height={96} className="h-24 w-auto brightness-0 invert" style={{ width: "auto", height: "auto" }} priority />
         </Link>
       </div>
     </nav>

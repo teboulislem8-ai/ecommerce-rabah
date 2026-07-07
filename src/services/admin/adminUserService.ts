@@ -73,41 +73,41 @@ export const adminUserService = {
         throw error;
       }
 
-      // Get additional stats for each user
-      const usersWithStats = await Promise.all(
-        (data || []).map(async (user) => {
-          const { data: orders } = await supabase
-            .from("orders")
-            .select("total, created_at")
-            .eq("user_id", user.profile_id);
+      // Batch-fetch all orders for all users in one query
+      const profileIds = (data || []).map((u) => u.profile_id);
+      const { data: allOrders } = await supabase
+        .from("orders")
+        .select("user_id, total, created_at")
+        .in("user_id", profileIds);
 
-          const userOrders = orders || [];
-          const totalOrders = userOrders.length;
-          const totalSpent = userOrders.reduce(
-            (sum, order) => sum + order.total,
-            0,
-          );
-          const lastOrderDate =
-            userOrders.length > 0
-              ? userOrders[userOrders.length - 1].created_at
-              : null;
+      const ordersByUser = new Map<string, Array<{ total: number; created_at: string }>>();
+      for (const order of allOrders || []) {
+        if (!ordersByUser.has(order.user_id)) {
+          ordersByUser.set(order.user_id, []);
+        }
+        ordersByUser.get(order.user_id)!.push(order);
+      }
 
-          // Determine if user is active (has ordered in last 30 days)
-          const thirtyDaysAgo = new Date();
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          const isActive = userOrders.some(
-            (order) => new Date(order.created_at) > thirtyDaysAgo,
-          );
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-          return {
-            ...user,
-            total_orders: totalOrders,
-            total_spent: Number(totalSpent.toFixed(2)),
-            last_order_date: lastOrderDate,
-            is_active: isActive,
-          };
-        }),
-      );
+      const usersWithStats = (data || []).map((user) => {
+        const userOrders = ordersByUser.get(user.profile_id) || [];
+        const totalOrders = userOrders.length;
+        const totalSpent = userOrders.reduce((sum, order) => sum + order.total, 0);
+        const lastOrderDate = totalOrders > 0 ? userOrders[totalOrders - 1].created_at : null;
+        const isActive = userOrders.some(
+          (order) => new Date(order.created_at) > thirtyDaysAgo,
+        );
+
+        return {
+          ...user,
+          total_orders: totalOrders,
+          total_spent: Number(totalSpent.toFixed(2)),
+          last_order_date: lastOrderDate,
+          is_active: isActive,
+        };
+      });
 
       return {
         users: usersWithStats,
@@ -273,35 +273,38 @@ export const adminUserService = {
         (user) => new Date(user.created_at) >= thisMonth,
       ).length;
 
-      // Get users with order data for active users and top spenders
-      const usersWithOrders = await Promise.all(
-        allUsers.map(async (user) => {
-          const { data: orders } = await supabase
-            .from("orders")
-            .select("total, created_at")
-            .eq("user_id", user.profile_id);
+      // Batch-fetch all orders for analytics
+      const profileIds = allUsers.map((u) => u.profile_id);
+      const { data: allOrders } = await supabase
+        .from("orders")
+        .select("user_id, total, created_at")
+        .in("user_id", profileIds);
 
-          const userOrders = orders || [];
-          const totalSpent = userOrders.reduce(
-            (sum, order) => sum + order.total,
-            0,
-          );
+      const ordersByUser = new Map<string, Array<{ total: number; created_at: string }>>();
+      for (const order of allOrders || []) {
+        if (!ordersByUser.has(order.user_id)) {
+          ordersByUser.set(order.user_id, []);
+        }
+        ordersByUser.get(order.user_id)!.push(order);
+      }
 
-          // Check if active (has ordered in last 30 days)
-          const thirtyDaysAgo = new Date();
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          const isActive = userOrders.some(
-            (order) => new Date(order.created_at) > thirtyDaysAgo,
-          );
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-          return {
-            ...user,
-            total_orders: userOrders.length,
-            total_spent: Number(totalSpent.toFixed(2)),
-            is_active: isActive,
-          };
-        }),
-      );
+      const usersWithOrders = allUsers.map((user) => {
+        const userOrders = ordersByUser.get(user.profile_id) || [];
+        const totalSpent = userOrders.reduce((sum, order) => sum + order.total, 0);
+        const isActive = userOrders.some(
+          (order) => new Date(order.created_at) > thirtyDaysAgo,
+        );
+
+        return {
+          ...user,
+          total_orders: userOrders.length,
+          total_spent: Number(totalSpent.toFixed(2)),
+          is_active: isActive,
+        };
+      });
 
       const activeUsers = usersWithOrders.filter(
         (user) => user.is_active,
@@ -350,29 +353,35 @@ export const adminUserService = {
 
       if (!users) return [];
 
-      // Filter for users who had orders but haven't been active recently
-      const usersRequiringAttention = await Promise.all(
-        users.map(async (user) => {
-          const { data: orders } = await supabase
-            .from("orders")
-            .select("total, created_at")
-            .eq("user_id", user.profile_id)
-            .order("created_at", { ascending: false });
+      // Batch-fetch orders for all filtered users
+      const profileIds = users.map((u) => u.profile_id);
+      const { data: allOrders } = await supabase
+        .from("orders")
+        .select("user_id, total, created_at")
+        .in("user_id", profileIds)
+        .order("created_at", { ascending: false });
 
-          const userOrders = orders || [];
+      const ordersByUser = new Map<string, Array<{ total: number; created_at: string }>>();
+      for (const order of allOrders || []) {
+        if (!ordersByUser.has(order.user_id)) {
+          ordersByUser.set(order.user_id, []);
+        }
+        ordersByUser.get(order.user_id)!.push(order);
+      }
 
-          if (userOrders.length === 0) return null; // Skip users with no orders
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 90); // 3 months
+
+      return users
+        .map((user) => {
+          const userOrders = ordersByUser.get(user.profile_id) || [];
+          if (userOrders.length === 0) return null;
 
           const lastOrderDate = userOrders[0].created_at;
-          const threeDaysAgo = new Date();
-          threeDaysAgo.setDate(threeDaysAgo.getDate() - 90); // 3 months
 
           // Include if they had orders but haven't ordered in 3 months
           if (new Date(lastOrderDate) < threeDaysAgo) {
-            const totalSpent = userOrders.reduce(
-              (sum, order) => sum + order.total,
-              0,
-            );
+            const totalSpent = userOrders.reduce((sum, order) => sum + order.total, 0);
 
             return {
               ...user,
@@ -384,12 +393,8 @@ export const adminUserService = {
           }
 
           return null;
-        }),
-      );
-
-      return usersRequiringAttention.filter(
-        (user) => user !== null,
-      ) as UserWithStats[];
+        })
+        .filter((user): user is UserWithStats => user !== null);
     } catch (err) {
       console.error("Failed to get users requiring attention:", err);
       return [];
@@ -413,21 +418,23 @@ export const adminUserService = {
       }
 
       // Get basic stats for search results
-      const usersWithStats = await Promise.all(
-        (data || []).map(async (user) => {
-          const { count: totalOrders } = await supabase
-            .from("orders")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", user.profile_id);
+      const profileIds = (data || []).map((u) => u.profile_id);
+      const { data: allOrderCounts } = await supabase
+        .from("orders")
+        .select("user_id", { count: "exact", head: false })
+        .in("user_id", profileIds);
 
-          return {
-            ...user,
-            total_orders: totalOrders || 0,
-            total_spent: 0, // Skip expensive calculation for search
-            is_active: false, // Skip expensive calculation for search
-          };
-        }),
-      );
+      const countByUser = new Map<string, number>();
+      for (const order of allOrderCounts || []) {
+        countByUser.set(order.user_id, (countByUser.get(order.user_id) || 0) + 1);
+      }
+
+      const usersWithStats = (data || []).map((user) => ({
+        ...user,
+        total_orders: countByUser.get(user.profile_id) || 0,
+        total_spent: 0,
+        is_active: false,
+      }));
 
       return usersWithStats;
     } catch (err) {

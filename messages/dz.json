@@ -72,7 +72,8 @@
     "adminOrders": "الطلبات",
     "adminUsers": "المستخدمين",
     "lightMode": "الوضع النهاري",
-    "darkMode": "الوضع الليلي"
+    "darkMode": "الوضع الليلي",
+    "profileAndOrders": "الملف الشخصي والطلبات"
   },
 
   "home": {
@@ -289,7 +290,13 @@
     "profileUpdated": "تم تحديث الملف بنجاح",
     "failedToFetch": "تعذر تحميل الملف",
     "somethingWentWrong": "حدث خطأ ما",
-    "viewOrders": "عرض طلباتي"
+    "viewOrders": "عرض طلباتي",
+    "deleteAccount": "حذف الحساب",
+    "deleteAccountWarning": "سيتم حذف جميع بياناتك وطلباتك نهائياً",
+    "deleteAccountConfirm": "هل أنت متأكد؟",
+    "deleteAccountCancel": "إلغاء",
+    "deleteAccountConfirmButton": "نعم، احذف حسابي",
+    "deleting": "جاري الحذف..."
   },
 
   "dashboard": {
@@ -643,6 +650,17 @@
     "saving": "جاري الحفظ...",
     "update": "تحديث",
     "create": "إضافة"
+  },
+
+  "categoryCombobox": {
+    "selectCategory": "اختر القسم",
+    "searchPlaceholder": "ابحث عن قسم أو أضف جديد...",
+    "noCategory": "بلا قسم",
+    "noCategories": "لا توجد أقسام",
+    "create": "أضف \"{name}\"",
+    "creating": "جاري الإضافة...",
+    "loading": "جاري التحميل...",
+    "retry": "إعادة المحاولة"
   },
 
   "deleteConfirmModal": {

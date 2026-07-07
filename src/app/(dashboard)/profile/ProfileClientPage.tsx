@@ -5,8 +5,11 @@ import { useAuth } from "@/context/AuthContext";
 import { ProfileCard } from "@/components/ProfileCard";
 import { OrderCard } from "@/components/OrderCard";
 import { EmptyOrdersState } from "@/components/EmptyOrdersState";
+import { updateProfileAction, deleteProfileAction } from "@/app/actions/profile";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
+import { z } from "zod";
 import { User } from "@supabase/supabase-js";
 import { OrderType, ProfileType } from "@/types";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -34,6 +37,7 @@ export default function ProfileClientPage({
 }: ProfileClientPageProps) {
   const { signOut } = useAuth();
   const router = useRouter();
+  const t = useTranslations("profile");
 
   const [username, setUsername] = useState(initialProfile?.username || "");
   const [avatarUrl, setAvatarUrl] = useState(initialProfile?.avatar_url || "");
@@ -45,7 +49,6 @@ export default function ProfileClientPage({
 
   const handleSaveProfile = async (
     usernameInput: string,
-    emailInput: string,
     avatarUrlInput: string,
     phoneInput?: string,
     cityInput?: string,
@@ -53,28 +56,22 @@ export default function ProfileClientPage({
     try {
       setIsSaving(true);
 
-      const { data: updatedProfile, error } = await supabase
-        .from("profiles")
-        .update({
-          username: usernameInput,
-          email: emailInput,
-          avatar_url: avatarUrlInput,
-          phone: phoneInput ?? phone,
-          city: cityInput ?? city,
-        })
-        .eq("profile_id", user.id)
-        .select()
-        .single();
+      const result = await updateProfileAction({
+        username: usernameInput,
+        avatar_url: avatarUrlInput,
+        phone: phoneInput ?? phone,
+        city: cityInput ?? city,
+      });
 
-      if (error) throw error;
-
-      setUsername(updatedProfile.username || "");
-      setEmail(updatedProfile.email || "");
-      setAvatarUrl(updatedProfile.avatar_url || "");
-      setPhone(updatedProfile.phone || "");
-      setCity(updatedProfile.city || "");
-
-      toast.success("Profile updated successfully");
+      if (result.success) {
+        setUsername(usernameInput);
+        setAvatarUrl(avatarUrlInput);
+        setPhone(phoneInput ?? phone);
+        setCity(cityInput ?? city);
+        toast.success("Profile updated successfully");
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
       console.error("Error updating profile:", JSON.stringify(error, null, 2));
       toast.error("Failed to update profile");
@@ -84,6 +81,13 @@ export default function ProfileClientPage({
   };
 
   const handleUpdateEmail = async (newEmail: string) => {
+    const emailSchema = z.string().email();
+    const parsed = emailSchema.safeParse(newEmail);
+    if (!parsed.success) {
+      toast.error("Invalid email address");
+      throw new Error("Invalid email address");
+    }
+
     try {
       const { error } = await supabase.auth.updateUser({ email: newEmail });
       if (error) throw error;
@@ -102,6 +106,32 @@ export default function ProfileClientPage({
   const handleSignOut = async () => {
     await signOut();
     router.push("/");
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      `${t("deleteAccountConfirm")}\n${t("deleteAccountWarning")}`,
+    );
+    if (!confirmed) return;
+
+    const toastId = toast.loading(t("deleting"));
+    try {
+      const result = await deleteProfileAction({});
+      toast.dismiss(toastId);
+
+      if (result.success) {
+        await signOut();
+        router.push("/");
+      } else {
+        toast.error(result.error);
+      }
+    } catch (error) {
+      toast.dismiss(toastId);
+      console.error("Error deleting account:", JSON.stringify(error, null, 2));
+      toast.error(
+        error instanceof Error ? error.message : t("deleteAccountWarning"),
+      );
+    }
   };
 
   const handleOrderDeleted = (deletedOrderId: number) => {
@@ -182,6 +212,7 @@ export default function ProfileClientPage({
             isSaving={isSaving}
             onSaveProfile={handleSaveProfile}
             onSignOut={handleSignOut}
+            onDeleteAccount={handleDeleteAccount}
             onUpdateEmail={handleUpdateEmail}
           />
         </div>

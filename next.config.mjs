@@ -16,6 +16,9 @@ const nextConfig = {
     dangerouslyAllowSVG: true,
     unoptimized: process.env.NODE_ENV === "development",
   },
+  experimental: {
+    taint: true,
+  },
 };
 
 export default withNextIntl(nextConfig);

@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase/client";
 import { processPendingOrder } from "@/utils/createCODOrder";
+import { updateProfileAction } from "@/app/actions/profile";
 
 const WILAYA_KEYS = [
   "01","02","03","04","05","06","07","08","09","10",
@@ -57,14 +58,13 @@ export function SignInForm({
 
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from("profiles").upsert({
-          profile_id: user.id,
+        await updateProfileAction({
           username: nameInput,
           phone: phoneInput,
           city: cityInput,
         });
 
-        const waUrl = await processPendingOrder(user.id);
+        const waUrl = await processPendingOrder();
         if (waUrl) {
           window.location.href = waUrl;
           return;

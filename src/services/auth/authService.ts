@@ -46,34 +46,6 @@ export const authService = {
   },
 
   /**
-   * Get user by ID from auth.users
-   *
-   * @param userId The user ID to fetch
-   * @returns Promise resolving to the User object or null on error
-   */
-  async getUserById(userId: string): Promise<User | null> {
-    try {
-      const {
-        data: { user },
-        error,
-      } = await supabaseAuth.admin.getUserById(userId);
-
-      if (error) {
-        console.error("AuthService - Failed to get user by ID:", error);
-        throw error;
-      }
-
-      return user;
-    } catch (error) {
-      console.error(
-        `AuthService - Error getting user with ID ${userId}:`,
-        error,
-      );
-      return null;
-    }
-  },
-
-  /**
    * Get current authenticated user's email
    *
    * @returns Promise resolving to the user's email or null if not found/logged in

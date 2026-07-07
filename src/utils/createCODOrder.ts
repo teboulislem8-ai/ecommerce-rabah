@@ -1,9 +1,10 @@
-import { supabase } from "@/lib/supabase/client";
+import { createOrderAction } from "@/app/actions/order";
 
-const WHATSAPP_NUMBER =
-  process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+213774029594";
+const PENDING_ORDER_KEY = "pendingWhatsAppOrder";
+const BC_CHANNEL = "cod-pending-order";
+const AUTH_BC_CHANNEL = "auth-state";
 
-type PendingOrder = {
+export type PendingOrder = {
   title: string;
   quantity: number;
   price: number;
@@ -11,9 +12,30 @@ type PendingOrder = {
   productId: string;
 };
 
-export function getPendingOrder(): PendingOrder | null {
+type Listener = (order: PendingOrder | null) => void;
+
+let bc: BroadcastChannel | null = null;
+const listeners = new Set<Listener>();
+
+function getChannel(): BroadcastChannel | null {
+  if (typeof window === "undefined") return null;
+  if (!bc) {
+    try {
+      bc = new BroadcastChannel(BC_CHANNEL);
+      bc.onmessage = (event) => {
+        const order = event.data as PendingOrder | null;
+        listeners.forEach((fn) => fn(order));
+      };
+    } catch {
+      return null;
+    }
+  }
+  return bc;
+}
+
+function readFromStorage(): PendingOrder | null {
   try {
-    const raw = sessionStorage.getItem("pendingWhatsAppOrder");
+    const raw = localStorage.getItem(PENDING_ORDER_KEY);
     if (!raw) return null;
     return JSON.parse(raw) as PendingOrder;
   } catch {
@@ -21,70 +43,62 @@ export function getPendingOrder(): PendingOrder | null {
   }
 }
 
+function writeToStorage(order: PendingOrder | null) {
+  if (order) {
+    localStorage.setItem(PENDING_ORDER_KEY, JSON.stringify(order));
+  } else {
+    localStorage.removeItem(PENDING_ORDER_KEY);
+  }
+}
+
+// Auto-clear pending order when auth state changes across tabs
+if (typeof window !== "undefined") {
+  try {
+    const authChannel = new BroadcastChannel(AUTH_BC_CHANNEL);
+    authChannel.onmessage = (event) => {
+      if (event.data?.type === "SIGNED_IN" || event.data?.type === "SIGNED_OUT") {
+        clearPendingOrder();
+      }
+    };
+  } catch {
+    // BroadcastChannel not supported
+  }
+}
+
+export function subscribe(fn: Listener): () => void {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+
+export function getPendingOrder(): PendingOrder | null {
+  return readFromStorage();
+}
+
 export function setPendingOrder(order: PendingOrder) {
-  sessionStorage.setItem("pendingWhatsAppOrder", JSON.stringify(order));
+  writeToStorage(order);
+  getChannel()?.postMessage(order);
 }
 
 export function clearPendingOrder() {
-  sessionStorage.removeItem("pendingWhatsAppOrder");
+  writeToStorage(null);
+  getChannel()?.postMessage(null);
 }
 
-export async function processPendingOrder(userId: string): Promise<string | null> {
+export async function processPendingOrder(): Promise<string | null> {
   const pending = getPendingOrder();
   if (!pending) return null;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("username, phone, city")
-    .eq("profile_id", userId)
-    .single();
+  const result = await createOrderAction({
+    productId: pending.productId,
+    quantity: pending.quantity,
+    price: pending.price,
+    total: pending.total,
+  });
 
-  const userName = profile?.username || "";
-  const userPhone = profile?.phone || "";
-  const userCity = profile?.city || "";
-
-  const { data: address } = await supabase
-    .from("addresses")
-    .insert({
-      user_id: userId,
-      street: userName,
-      city: userCity,
-      state: userPhone,
-      zip_code: "00000",
-      country: "DZ",
-      is_default: true,
-    })
-    .select()
-    .single();
-
-  if (address) {
-    const { data: order } = await supabase
-      .from("orders")
-      .insert({
-        user_id: userId,
-        total: pending.total,
-        status: "pending",
-        payment_method: "cod",
-        shipping_address_id: address.id,
-      })
-      .select()
-      .single();
-
-    if (order) {
-      await supabase.from("order_items").insert({
-        order_id: order.id,
-        product_id: pending.productId,
-        quantity: pending.quantity,
-        price: pending.price,
-      });
-    }
+  if (result.success) {
+    clearPendingOrder();
+    return result.whatsappUrl;
   }
 
-  clearPendingOrder();
-
-  const msg = encodeURIComponent(
-    `السلام عليكم ورحمة الله وبركاته، حبيت نأكد الطلب تاعي : ${pending.title} x${pending.quantity} — DA ${pending.total.toFixed(2)}. الاسم: ${userName}. الولاية: ${userCity}. الهاتف: ${userPhone}.`
-  );
-
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`;
+  return null;
 }

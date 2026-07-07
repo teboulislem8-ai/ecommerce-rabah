@@ -44,4 +44,46 @@ export const categoryService = {
         : toUserFacingQueryError('Category', {});
     }
   },
+
+  async createCategory(name: string, description?: string): Promise<CategoryType> {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .insert({ name, description: description || '' })
+        .select()
+        .single();
+
+      if (error) {
+        throw toUserFacingQueryError('Category', error);
+      }
+
+      return data as CategoryType;
+    } catch (error) {
+      throw error instanceof Error
+        ? error
+        : toUserFacingQueryError('Category', {});
+    }
+  },
+
+  async getOrCreateCategory(name: string): Promise<CategoryType> {
+    try {
+      const normalized = name.trim();
+      if (!normalized) throw new Error('Category name is required');
+
+      const { data: existing, error: findError } = await supabase
+        .from('categories')
+        .select('*')
+        .ilike('name', normalized)
+        .maybeSingle();
+
+      if (findError) throw toUserFacingQueryError('Category', findError);
+      if (existing) return existing as CategoryType;
+
+      return this.createCategory(normalized);
+    } catch (error) {
+      throw error instanceof Error
+        ? error
+        : toUserFacingQueryError('Category', {});
+    }
+  },
 };

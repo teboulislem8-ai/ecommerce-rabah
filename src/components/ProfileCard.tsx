@@ -9,7 +9,7 @@ import { EmailChangeModal } from "@/components/EmailChangeModal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { profileService } from "@/services/profile/profileService";
-import { Pencil, LogOut, Phone, MapPin } from "lucide-react";
+import { Pencil, LogOut, Trash2, Phone, MapPin } from "lucide-react";
 
 const WILAYA_KEYS = [
   "01","02","03","04","05","06","07","08","09","10",
@@ -34,8 +34,9 @@ interface ProfileCardProps {
   setCity: (value: string) => void;
   createdAt: string | null;
   isSaving: boolean;
-  onSaveProfile: (username: string, email: string, avatarUrl: string, phone?: string, city?: string) => void;
+  onSaveProfile: (username: string, avatarUrl: string, phone?: string, city?: string) => void;
   onSignOut: () => void;
+  onDeleteAccount?: () => void;
   onUpdateEmail?: (newEmail: string) => Promise<void>;
 }
 
@@ -55,6 +56,7 @@ export function ProfileCard({
   isSaving,
   onSaveProfile,
   onSignOut,
+  onDeleteAccount,
   onUpdateEmail,
 }: ProfileCardProps) {
   const t = useTranslations();
@@ -83,7 +85,7 @@ export function ProfileCard({
     setAvatarUrl(avatarUrlInput);
     setPhone(phoneInput);
     setCity(cityInput);
-    onSaveProfile(usernameInput, email, avatarUrlInput, phoneInput, cityInput);
+    onSaveProfile(usernameInput, avatarUrlInput, phoneInput, cityInput);
     setEditingName(false);
   };
 
@@ -120,7 +122,7 @@ export function ProfileCard({
       if (publicUrl) {
         setAvatarUrlInput(publicUrl);
         setAvatarUrl(publicUrl);
-        onSaveProfile(usernameInput, email, publicUrl, phoneInput, cityInput);
+        onSaveProfile(usernameInput, publicUrl, phoneInput, cityInput);
         if (previewUrl) {
           URL.revokeObjectURL(previewUrl);
           setPreviewUrl(null);
@@ -298,6 +300,19 @@ export function ProfileCard({
               <LogOut className="h-5 w-5" />
             </Button>
           </div>
+
+          {onDeleteAccount && (
+            <div className="w-full pt-2">
+              <Button
+                onClick={onDeleteAccount}
+                variant="destructive"
+                className="w-full cursor-pointer gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                {t("profile.deleteAccount")}
+              </Button>
+            </div>
+          )}
         </div>
       </CardContent>
 

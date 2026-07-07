@@ -15,16 +15,11 @@ import {
 import {
   CreateProductData,
   ProductWithDetails,
+  adminProductService,
 } from "@/services/admin/adminProductService";
-import { useCategories } from "@/hooks/queries";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { CategoryCombobox } from "@/components/admin/CategoryCombobox";
 import { useTranslations } from "next-intl";
+import { ImageUploader, type ImageItem } from "@/components/admin/ImageUploader";
 
 interface ProductFormModalProps {
   isOpen: boolean;
@@ -38,10 +33,8 @@ interface FormData {
   title: string;
   description: string;
   price: string;
-  image: string;
   stock: string;
   sku: string;
-  category_id: string;
 }
 
 export function ProductFormModal({
@@ -55,22 +48,14 @@ export function ProductFormModal({
     title: "",
     description: "",
     price: "",
-    image: "",
     stock: "",
     sku: "",
-    category_id: "no-category",
   });
+  const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
+  const [images, setImages] = useState<ImageItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const t = useTranslations("productFormModal");
-
-  // Use the query hook to fetch categories
-  const {
-    data: categories,
-    isLoading: categoriesLoading,
-    error: categoriesError,
-    refetch: refetchCategories,
-  } = useCategories();
 
   useEffect(() => {
     if (product) {
@@ -78,21 +63,26 @@ export function ProductFormModal({
         title: product.title || "",
         description: product.description || "",
         price: product.price?.toString() || "",
-        image: product.image || "",
         stock: product.stock?.toString() || "",
         sku: product.sku || "",
-        category_id: product.category_id?.toString() || "no-category",
       });
+      setCategoryId(product.category_id ?? undefined);
+      setImages(
+        (product.images || []).map((img) => ({
+          id: `existing-${img.id}`,
+          url: img.url,
+        })),
+      );
     } else {
       setFormData({
         title: "",
         description: "",
         price: "",
-        image: "",
         stock: "",
         sku: "",
-        category_id: "no-category",
       });
+      setCategoryId(undefined);
+      setImages([]);
     }
     setErrors({});
   }, [product, isOpen]);
@@ -139,17 +129,37 @@ export function ProductFormModal({
 
     setLoading(true);
     try {
+      // Collect existing URLs and upload new files
+      const imageUrls: string[] = [];
+      const newFiles: File[] = [];
+
+      for (const img of images) {
+        if (img.file) {
+          newFiles.push(img.file);
+        } else if (img.url) {
+          imageUrls.push(img.url);
+        }
+      }
+
+      // For create: upload to a temporary identifier, then the service handles it
+      // For update: upload using the existing product ID
+      if (newFiles.length > 0) {
+        const productId = product?.product_id || "temp";
+        const uploaded = await adminProductService.uploadProductImages(
+          productId,
+          newFiles,
+        );
+        imageUrls.push(...uploaded);
+      }
+
       const submitData: CreateProductData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         price: parseFloat(formData.price),
-        image: formData.image.trim() || undefined,
+        images: imageUrls,
         stock: parseInt(formData.stock),
         sku: formData.sku.trim() || undefined,
-        category_id:
-          formData.category_id && formData.category_id !== "no-category"
-            ? parseInt(formData.category_id)
-            : undefined,
+        category_id: categoryId,
       };
 
       await onSubmit(submitData);
@@ -162,7 +172,6 @@ export function ProductFormModal({
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
@@ -271,48 +280,19 @@ export function ProductFormModal({
 
           <div>
             <Label htmlFor="category">{t("category")}</Label>
-            {categoriesError && (
-              <div className="border-destructive/30 bg-destructive/10 mt-1 mb-2 space-y-2 rounded-md border p-2 text-sm">
-                <p className="text-destructive">{categoriesError.message}</p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="cursor-pointer"
-                  onClick={() => void refetchCategories()}
-                >
-                  {t("retryCategories")}
-                </Button>
-              </div>
-            )}
-            <Select
-              value={formData.category_id}
-              onValueChange={(value) =>
-                handleInputChange("category_id", value ?? "")
-              }
-              disabled={categoriesLoading || !!categoriesError}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={t("selectCategory")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="no-category">{t("noCategory")}</SelectItem>
-                {categories?.map((category) => (
-                  <SelectItem key={category.id} value={category.id.toString()}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CategoryCombobox
+              value={categoryId}
+              onChange={(id) => setCategoryId(id)}
+            />
           </div>
 
           <div>
-            <Label htmlFor="image">{t("imageUrl")}</Label>
-            <Input
-              id="image"
-              value={formData.image}
-              onChange={(e) => handleInputChange("image", e.target.value)}
-              placeholder={t("imageUrlPlaceholder")}
+            <Label>{t("imageUrl")}</Label>
+            <ImageUploader
+              existingImages={images
+                .filter((img) => img.url)
+                .map((img) => ({ url: img.url! }))}
+              onChange={setImages}
             />
           </div>
 

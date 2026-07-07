@@ -2,7 +2,10 @@
 
 import { Bell, CheckCheck } from "lucide-react";
 import { useNotifications, useUnreadCount, useRealtimeNotifications } from "@/hooks/queries";
-import { notificationService } from "@/services/notification/notificationService";
+import {
+  markNotificationAsReadAction,
+  markAllNotificationsAsReadAction,
+} from "@/app/actions/notification";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +30,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
   useRealtimeNotifications(userId);
 
   const handleMarkAllRead = async () => {
-    await notificationService.markAllAsRead(userId);
+    await markAllNotificationsAsReadAction({ userId });
   };
 
   const handleNotificationClick = async (notification: typeof notifications[0]) => {
@@ -35,7 +38,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
       router.push(notification.link);
     }
     if (!notification.is_read) {
-      await notificationService.markAsRead(notification.id);
+      await markNotificationAsReadAction({ notificationId: notification.id });
     }
   };
 

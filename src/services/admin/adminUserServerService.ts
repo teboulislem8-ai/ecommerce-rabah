@@ -62,6 +62,7 @@ export const adminUserServerService = {
 
       // Get paginated results
       const { data, error } = await query
+        .order("role", { ascending: true })
         .order("created_at", { ascending: false })
         .range((page - 1) * limit, page * limit - 1);
 
@@ -70,45 +71,44 @@ export const adminUserServerService = {
         throw error;
       }
 
-      // Get additional stats for each user and sanitize data
-      const sanitizedUsers = await Promise.all(
-        (data || []).map(async (user) => {
-          // Get order stats (but don't expose detailed spending data)
-          const { data: orders } = await supabase
-            .from("orders")
-            .select("total, created_at")
-            .eq("user_id", user.profile_id);
+      // Batch-fetch all orders for all users in one query
+      const profileIds = (data || []).map((u) => u.profile_id);
+      const { data: allOrders } = await supabase
+        .from("orders")
+        .select("user_id, total, created_at")
+        .in("user_id", profileIds);
 
-          const userOrders = orders || [];
-          const totalOrders = userOrders.length;
-          const totalSpent = userOrders.reduce(
-            (sum, order) => sum + order.total,
-            0,
-          );
+      const ordersByUser = new Map<string, Array<{ total: number; created_at: string }>>();
+      for (const order of allOrders || []) {
+        if (!ordersByUser.has(order.user_id)) {
+          ordersByUser.set(order.user_id, []);
+        }
+        ordersByUser.get(order.user_id)!.push(order);
+      }
 
-          // Determine if user is active (has ordered in last 30 days)
-          const thirtyDaysAgo = new Date();
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          const isActive = userOrders.some(
-            (order) => new Date(order.created_at) > thirtyDaysAgo,
-          );
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-          // Sanitize sensitive data
-          return {
-            profile_id: user.profile_id,
-            username: user.username,
-            // Mask email for privacy
-            email: maskEmail(user.email),
-            role: user.role,
-            created_at: user.created_at,
-            // Use ranges instead of exact values
-            has_orders: totalOrders > 0,
-            order_count_range: getOrderCountRange(totalOrders),
-            spending_tier: getSpendingTier(totalSpent),
-            is_active: isActive,
-          };
-        }),
-      );
+      const sanitizedUsers = (data || []).map((user) => {
+        const userOrders = ordersByUser.get(user.profile_id) || [];
+        const totalOrders = userOrders.length;
+        const totalSpent = userOrders.reduce((sum, order) => sum + order.total, 0);
+        const isActive = userOrders.some(
+          (order) => new Date(order.created_at) > thirtyDaysAgo,
+        );
+
+        return {
+          profile_id: user.profile_id,
+          username: user.username,
+          email: maskEmail(user.email),
+          role: user.role,
+          created_at: user.created_at,
+          has_orders: totalOrders > 0,
+          order_count_range: getOrderCountRange(totalOrders),
+          spending_tier: getSpendingTier(totalSpent),
+          is_active: isActive,
+        };
+      });
 
       return {
         users: sanitizedUsers,

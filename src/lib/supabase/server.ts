@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { Database } from '@/types/supabase';
+import { experimental_taintUniqueValue } from 'react';
 
 /**
  * Creates a Supabase client for server-side usage with proper cookie handling
@@ -29,8 +30,8 @@ export const createServerSupabase = async () => {
 };
 
 /**
- * Helper function to get the authenticated user from server-side
- * get the authenticated user from the server side
+ * Get the authenticated user from server-side with data tainting
+ * to prevent session tokens from leaking to client bundles.
  */
 export const getAuthenticatedUser = async () => {
   const supabase = await createServerSupabase();
@@ -41,6 +42,14 @@ export const getAuthenticatedUser = async () => {
   if (error || !user) {
     return null;
   }
+
+  // Taint the user object so it cannot be serialized to the client
+  experimental_taintUniqueValue(
+    'Do not pass the user auth object to the client. Use profile data instead.',
+    user,
+    user.id,
+  );
+
   return user;
 };
 

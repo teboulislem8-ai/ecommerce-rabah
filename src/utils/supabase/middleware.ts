@@ -33,13 +33,17 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const publicStorefrontPaths = ['/', '/products', '/checkout'];
+  const publicStorefrontPaths = ['/', '/products'];
   const authPaths = ['/signin', '/signup', '/reset-password'];
+  const adminPaths = ['/admin'];
 
   const isStorefront = publicStorefrontPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   );
   const isAuthPage = authPaths.some((path) =>
+    request.nextUrl.pathname.startsWith(path)
+  );
+  const isAdminPath = adminPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   );
 
@@ -52,6 +56,18 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(
       new URL(`/signin?returnTo=${returnTo}`, request.url)
     );
+  }
+
+  if (isAdminPath) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('profile_id', user.id)
+      .single();
+
+    if (profile?.role !== 'admin') {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
   }
 
   return response;

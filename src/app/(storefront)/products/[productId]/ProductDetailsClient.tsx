@@ -13,9 +13,9 @@ import { Minus, Plus, MessageCircle, Share2, ChevronLeft, ChevronRight } from "l
 import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
 import { setPendingOrder } from "@/utils/createCODOrder";
+import { createOrderAction } from "@/app/actions/order";
 import { ReviewTab } from "./_components/review-tab";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase/client";
 
 type ProductDetailsClientProps = {
   product: ProductType;
@@ -29,71 +29,32 @@ export default function ProductDetailsClient({
   const { user } = useAuth();
   const router = useRouter();
 
-  // Generate multiple images from the single image (mock data for demo)
-  const productImages = product.image
-    ? [product.image, product.image, product.image, product.image]
-    : ["/placeholder-product.jpg"];
+  // Get product images from gallery or fall back to single image
+  const productImages = product.images?.length
+    ? product.images.map((img) => img.url)
+    : product.image
+      ? [product.image]
+      : ["/placeholder-product.jpg"];
 
   const t = useTranslations();
   const pd = useTranslations("productDetails");
 
   const handleCODOrder = async () => {
-    const whatsappNumber =
-      process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+213774029594";
     const total = product.price * quantity;
 
     if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("username, phone, city")
-        .eq("profile_id", user.id)
-        .single();
+      const result = await createOrderAction({
+        productId: product.product_id,
+        quantity,
+        price: product.price,
+        total,
+      });
 
-      const userName = profile?.username || "";
-      const userPhone = profile?.phone || "";
-      const userCity = profile?.city || "";
-
-      const { data: address } = await supabase
-        .from("addresses")
-        .insert({
-          user_id: user.id,
-          street: userName,
-          city: userCity,
-          state: userPhone,
-          zip_code: "00000",
-          country: "DZ",
-          is_default: true,
-        })
-        .select()
-        .single();
-
-      if (address) {
-        const { data: order } = await supabase
-          .from("orders")
-          .insert({
-            user_id: user.id,
-            total,
-            status: "pending",
-            payment_method: "cod",
-            shipping_address_id: address.id,
-          })
-          .select()
-          .single();
-
-        if (order) {
-          await supabase.from("order_items").insert({
-            order_id: order.id,
-            product_id: product.product_id,
-            quantity,
-            price: product.price,
-          });
-        }
+      if (result.success) {
+        window.location.href = result.whatsappUrl;
+      } else {
+        toast.error(result.error);
       }
-
-      const msg = encodeURIComponent(
-        `السلام عليكم ورحمة الله وبركاته، حبيت نأكد الطلب تاعي : ${product.title} x${quantity} — DA ${total.toFixed(2)}. الاسم: ${userName}. الولاية: ${userCity}. الهاتف: ${userPhone}.`
-      );
-      window.location.href = `https://wa.me/${whatsappNumber}?text=${msg}`;
       return;
     }
 
@@ -170,7 +131,7 @@ export default function ProductDetailsClient({
                       alt={product.title}
                       fill
                       className="object-contain p-4"
-                      loading="eager"
+                      priority
                     />
                   ) : (
                     <div className="bg-muted flex h-full w-full items-center justify-center">

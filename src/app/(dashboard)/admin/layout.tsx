@@ -31,7 +31,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   useEffect(() => {
     if (!loading && !isAdmin) {
-      router.push("/signin");
+      router.push("/");
     }
   }, [isAdmin, loading, router]);
 
@@ -61,8 +61,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <p className="mb-4">
               ماعندكش صلاحية الوصول لهذه الصفحة.
             </p>
-            <Link href="/signin">
-              <Button>تسجيل الدخول</Button>
+            <Link href="/">
+              <Button>العودة للمتجر</Button>
             </Link>
           </CardContent>
         </Card>

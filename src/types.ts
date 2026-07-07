@@ -1,9 +1,18 @@
+export interface ProductImageType {
+  id: number;
+  product_id: string;
+  url: string;
+  sort_order: number;
+  created_at?: string;
+}
+
 export interface ProductType {
   product_id: string;
   title: string;
   description: string;
   price: number;
   image?: string;
+  images?: ProductImageType[];
   stock: number;
   sku?: string;
   category_id?: number;
