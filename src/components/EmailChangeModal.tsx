@@ -151,13 +151,13 @@ export function EmailChangeModal({
 								onChange={(e) => setCurrentPassword(e.target.value)}
 								placeholder="Enter your current password"
 								required
-								className="bg-background text-foreground placeholder:text-muted-foreground border-input pr-10"
+								className="bg-background text-foreground placeholder:text-muted-foreground border-input ps-10"
 							/>
 							<Button
 								type="button"
 								variant="ghost"
 								size="icon"
-								className="absolute top-0 right-0 h-full cursor-pointer px-3 py-2 hover:bg-transparent"
+								className="absolute top-0 end-0 h-full cursor-pointer px-3 py-2 hover:bg-transparent"
 								onClick={togglePasswordVisibility}
 								tabIndex={-1}
 							>

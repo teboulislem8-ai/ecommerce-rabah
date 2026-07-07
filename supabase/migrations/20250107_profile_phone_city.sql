@@ -1,0 +1,3 @@
+ALTER TABLE profiles
+ADD COLUMN phone TEXT,
+ADD COLUMN city TEXT;

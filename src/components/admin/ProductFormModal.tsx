@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTranslations } from "next-intl";
 
 interface ProductFormModalProps {
   isOpen: boolean;
@@ -61,6 +62,7 @@ export function ProductFormModal({
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const t = useTranslations("productFormModal");
 
   // Use the query hook to fetch categories
   const {
@@ -99,28 +101,28 @@ export function ProductFormModal({
     const newErrors: Record<string, string> = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = "Title is required";
+      newErrors.title = t("titleRequired");
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = "Description is required";
+      newErrors.description = t("descriptionRequired");
     }
 
     if (!formData.price.trim()) {
-      newErrors.price = "Price is required";
+      newErrors.price = t("priceRequired");
     } else {
       const price = parseFloat(formData.price);
       if (isNaN(price) || price <= 0) {
-        newErrors.price = "Price must be a positive number";
+        newErrors.price = t("pricePositive");
       }
     }
 
     if (!formData.stock.trim()) {
-      newErrors.stock = "Stock is required";
+      newErrors.stock = t("stockRequired");
     } else {
       const stock = parseInt(formData.stock);
       if (isNaN(stock) || stock < 0) {
-        newErrors.stock = "Stock must be a non-negative number";
+        newErrors.stock = t("stockNonNegative");
       }
     }
 
@@ -172,18 +174,18 @@ export function ProductFormModal({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            {product ? "Edit product details" : "Create a new product"}
+            {product ? t("editDetails") : t("createDetails")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="title">Product Title *</Label>
+            <Label htmlFor="title">{t("productTitle")}</Label>
             <Input
               id="title"
               value={formData.title}
               onChange={(e) => handleInputChange("title", e.target.value)}
-              placeholder="Enter product title"
+              placeholder={t("enterTitle")}
               className={
                 errors.title
                   ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500"
@@ -196,12 +198,12 @@ export function ProductFormModal({
           </div>
 
           <div>
-            <Label htmlFor="description">Description *</Label>
+            <Label htmlFor="description">{t("description")}</Label>
             <textarea
               id="description"
               value={formData.description}
               onChange={(e) => handleInputChange("description", e.target.value)}
-              placeholder="Enter product description"
+              placeholder={t("enterDescription")}
               rows={3}
               className={`w-full rounded-md border px-3 py-2 focus:ring-2 focus:outline-none ${
                 errors.description
@@ -216,7 +218,7 @@ export function ProductFormModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="price">Price ($) *</Label>
+              <Label htmlFor="price">{t("price")}</Label>
               <Input
                 id="price"
                 type="number"
@@ -237,7 +239,7 @@ export function ProductFormModal({
             </div>
 
             <div>
-              <Label htmlFor="stock">Stock *</Label>
+              <Label htmlFor="stock">{t("stock")}</Label>
               <Input
                 id="stock"
                 type="number"
@@ -258,17 +260,17 @@ export function ProductFormModal({
           </div>
 
           <div>
-            <Label htmlFor="sku">SKU</Label>
+            <Label htmlFor="sku">{t("sku")}</Label>
             <Input
               id="sku"
               value={formData.sku}
               onChange={(e) => handleInputChange("sku", e.target.value)}
-              placeholder="Product SKU (optional)"
+              placeholder={t("skuPlaceholder")}
             />
           </div>
 
           <div>
-            <Label htmlFor="category">Category</Label>
+            <Label htmlFor="category">{t("category")}</Label>
             {categoriesError && (
               <div className="border-destructive/30 bg-destructive/10 mt-1 mb-2 space-y-2 rounded-md border p-2 text-sm">
                 <p className="text-destructive">{categoriesError.message}</p>
@@ -279,7 +281,7 @@ export function ProductFormModal({
                   className="cursor-pointer"
                   onClick={() => void refetchCategories()}
                 >
-                  Retry categories
+                  {t("retryCategories")}
                 </Button>
               </div>
             )}
@@ -291,10 +293,10 @@ export function ProductFormModal({
               disabled={categoriesLoading || !!categoriesError}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select a category" />
+                <SelectValue placeholder={t("selectCategory")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="no-category">No category</SelectItem>
+                <SelectItem value="no-category">{t("noCategory")}</SelectItem>
                 {categories?.map((category) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}
@@ -305,12 +307,12 @@ export function ProductFormModal({
           </div>
 
           <div>
-            <Label htmlFor="image">Image URL</Label>
+            <Label htmlFor="image">{t("imageUrl")}</Label>
             <Input
               id="image"
               value={formData.image}
               onChange={(e) => handleInputChange("image", e.target.value)}
-              placeholder="https://example.com/image.jpg"
+              placeholder={t("imageUrlPlaceholder")}
             />
           </div>
 
@@ -321,10 +323,10 @@ export function ProductFormModal({
               onClick={onClose}
               disabled={loading}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : product ? "Update" : "Create"}
+              {loading ? t("saving") : product ? t("update") : t("create")}
             </Button>
           </DialogFooter>
         </form>

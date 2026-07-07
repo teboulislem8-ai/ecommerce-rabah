@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AlertTriangle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface DeleteConfirmModalProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export function DeleteConfirmModal({
   description,
   loading = false,
 }: DeleteConfirmModalProps) {
+  const t = useTranslations("deleteConfirmModal");
   const handleConfirm = async () => {
     await onConfirm();
   };
@@ -53,14 +55,14 @@ export function DeleteConfirmModal({
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose} disabled={loading}>
-            Cancel
+            {t("cancel")}
           </Button>
           <Button
             variant="destructive"
             onClick={handleConfirm}
             disabled={loading}
           >
-            {loading ? "Deleting..." : "Delete"}
+            {loading ? t("deleting") : t("delete")}
           </Button>
         </DialogFooter>
       </DialogContent>

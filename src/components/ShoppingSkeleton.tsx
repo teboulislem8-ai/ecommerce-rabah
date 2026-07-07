@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "./ui/card";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "./ui/skeleton";
 
@@ -15,10 +15,10 @@ export default function ShoppingSkeleton() {
     <div className="container mx-auto p-4">
       <div className="mb-6 flex items-center">
         <Link href="/" className="text-primary flex items-center">
-          <ArrowLeft className="mr-2 h-4 w-4" />
+          <ArrowRight className="ms-2 h-4 w-4" />
           Back to Shopping
         </Link>
-        <h1 className="ml-4 text-3xl font-bold">Your Shopping Cart</h1>
+        <h1 className="ms-4 text-3xl font-bold">Your Shopping Cart</h1>
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <div className="md:col-span-2">
@@ -37,7 +37,7 @@ export default function ShoppingSkeleton() {
                     <Skeleton className="h-9 w-9 rounded-md" />
                     <Skeleton className="mx-3 h-6 w-6" />
                     <Skeleton className="h-9 w-9 rounded-md" />
-                    <Skeleton className="ml-4 h-9 w-9 rounded-md" />
+                    <Skeleton className="me-4 h-9 w-9 rounded-md" />
                   </div>
                 </CardContent>
               </div>

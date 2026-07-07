@@ -84,9 +84,12 @@ export interface ProfileType {
   username?: string;
   avatar_url?: string;
   email?: string;
+  phone?: string;
+  city?: string;
   role: "admin" | "user";
   created_at: string;
   updated_at?: string;
+  onboarding_completed?: boolean;
 }
 
 export interface ReviewType {
@@ -96,6 +99,10 @@ export interface ReviewType {
   rating: number;
   comment?: string;
   created_at?: string;
+  profile?: {
+    username?: string;
+    avatar_url?: string;
+  } | null;
 }
 
 export interface CategoryType {
@@ -103,4 +110,15 @@ export interface CategoryType {
   name: string;
   description: string;
   parent_id?: number;
+}
+
+export interface NotificationType {
+  id: number;
+  user_id: string;
+  type: "new_order" | "low_stock" | "new_user";
+  title: string;
+  body?: string;
+  link?: string;
+  is_read: boolean;
+  created_at: string;
 }

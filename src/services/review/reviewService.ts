@@ -6,9 +6,9 @@ import { getClientUser } from '@/lib/supabase/clientUtils';
 export const reviewService = {
   async getReviewsByProduct(productId: string): Promise<ReviewType[]> {
     try {
-      const { data, error } = await supabase
+      const { data: reviews, error } = await supabase
         .from('reviews')
-        .select('*, profile:profiles(*)')
+        .select('*')
         .eq('product_id', productId)
         .order('created_at', { ascending: false });
 
@@ -24,7 +24,24 @@ export const reviewService = {
         return [];
       }
 
-      return (data as ReviewType[]) || [];
+      if (!reviews || reviews.length === 0) return [];
+
+      // Two-step fetch: collect user_ids and batch-fetch profiles
+      const userIds = [...new Set(reviews.map((r) => r.user_id))];
+
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('profile_id, username, avatar_url')
+        .in('profile_id', userIds);
+
+      const profileMap = new Map(
+        (profiles ?? []).map((p) => [p.profile_id, { username: p.username, avatar_url: p.avatar_url }]),
+      );
+
+      return reviews.map((review) => ({
+        ...review,
+        profile: profileMap.get(review.user_id) ?? null,
+      })) as ReviewType[];
     } catch (error) {
       console.error('Error in getReviewsByProduct:', error);
       toast.error('Something went wrong');
@@ -36,7 +53,7 @@ export const reviewService = {
     try {
       const { data, error } = await supabase
         .from('reviews')
-        .select('*, profile:profiles(*)')
+        .select('*')
         .eq('id', id)
         .single();
 

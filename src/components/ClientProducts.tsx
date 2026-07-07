@@ -2,23 +2,16 @@
 
 import { motion, AnimatePresence } from "motion/react";
 import { Input } from "@/components/ui/input";
-import { ProductCard } from "@/components/ProductCard";
+import { ProductGrid } from "@/components/product-grid";
 import { useProducts, FilterOptions } from "@/hooks/queries";
 import { ProductType } from "@/types";
 import { ErrorState } from "@/components/ErrorState";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ProductFilter } from "@/components/ProductFilter";
-import { useState, useMemo } from "react";
-
-// Helper functions (moved from hook to component for simplicity)
-const getCategoryId = (categoryName: string): number | null => {
-  const categoryMap: { [key: string]: number } = {
-    electronics: 3,
-    clothing: 1,
-    accessories: 2,
-  };
-  return categoryMap[categoryName] || null;
-};
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useCategoryMap } from "@/lib/categories";
 
 // Sort products based on the selected option
 const sortProducts = (
@@ -41,7 +34,7 @@ const sortProducts = (
   }
 };
 
-const filterProducts = (products: ProductType[], filters: FilterOptions) => {
+const filterProducts = (products: ProductType[], filters: FilterOptions, categoryMap: Record<string, number>) => {
   let filtered = [...products];
 
   // Filter by stock (only if not 'all')
@@ -50,24 +43,22 @@ const filterProducts = (products: ProductType[], filters: FilterOptions) => {
   } else if (filters.stockFilter === "out-of-stock") {
     filtered = filtered.filter((product) => product.stock === 0);
   }
-  // When stockFilter is 'all', show all products regardless of stock
 
   // Filter by category (only if not 'all')
   if (filters.categoryFilter !== "all") {
-    const categoryId = getCategoryId(filters.categoryFilter);
-    if (categoryId !== null) {
+    const categoryId = categoryMap[filters.categoryFilter];
+    if (categoryId !== undefined) {
       filtered = filtered.filter(
         (product) => product.category_id === categoryId,
       );
     }
   }
-  // When categoryFilter is 'all', show all categories
 
   return filtered;
 };
 
 export default function ClientProducts() {
-  // const { user } = useAuth(); // user is not used in this component
+  const t = useTranslations("clientProducts");
   const {
     data: products = [],
     isLoading: loading,
@@ -75,15 +66,48 @@ export default function ClientProducts() {
     refetch: retry,
   } = useProducts();
 
+  const categoryMap = useCategoryMap();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Sync URL changes (back/forward) back to filters — skip if we wrote this URL
+  const lastSyncedCat = useRef<string | null>(null);
+  useEffect(() => {
+    const cat = searchParams.get("cat") || "all";
+    if (lastSyncedCat.current === cat) return;
+    lastSyncedCat.current = cat;
+    setFilters((prev) => ({
+      ...prev,
+      categoryFilter: cat,
+    }));
+  }, [searchParams]);
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState<FilterOptions>({
-    sortBy: "default",
-    stockFilter: "all",
-    categoryFilter: "all",
+  const [filters, setFilters] = useState<FilterOptions>(() => {
+    const cat = searchParams.get("cat");
+    return {
+      sortBy: "default",
+      stockFilter: "all",
+      categoryFilter: cat || "all",
+    };
   });
 
+  const updateFilters = useCallback((newFilters: FilterOptions) => {
+    setFilters(newFilters);
+    const params = new URLSearchParams(searchParams.toString());
+    if (newFilters.categoryFilter !== "all") {
+      params.set("cat", newFilters.categoryFilter);
+    } else {
+      params.delete("cat");
+    }
+    const qs = params.toString();
+    const catVal = newFilters.categoryFilter !== "all" ? newFilters.categoryFilter : "all";
+    lastSyncedCat.current = catVal;
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [searchParams, router, pathname]);
+
   // Process products with search, filters, and sorting
-  //useMemo is used to memoize the function
   const processedProducts = useMemo(() => {
     if (!products) return [];
 
@@ -102,13 +126,13 @@ export default function ClientProducts() {
     }
 
     // Apply filters
-    processed = filterProducts(processed, filters);
+    processed = filterProducts(processed, filters, categoryMap);
 
     // Apply sorting
     processed = sortProducts(processed, filters.sortBy);
 
     return processed;
-  }, [products, searchTerm, filters]);
+  }, [products, searchTerm, filters, categoryMap]);
 
   return (
     <ErrorBoundary>
@@ -122,7 +146,7 @@ export default function ClientProducts() {
         >
           <Input
             type="text"
-            placeholder="Search products..."
+            placeholder={t("searchProducts")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full"
@@ -130,7 +154,7 @@ export default function ClientProducts() {
         </motion.div>
 
         {/* Product Filter */}
-        <ProductFilter filters={filters} onFilterChange={setFilters} />
+        <ProductFilter filters={filters} onFilterChange={updateFilters} />
 
         {/* Product Count and Reset */}
         <motion.div
@@ -140,8 +164,7 @@ export default function ClientProducts() {
         >
           <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <span>
-              Showing {processedProducts.length} of {products?.length || 0}{" "}
-              products
+              {t("showing", { count: processedProducts.length, total: products?.length || 0 })}
             </span>
           </div>
 
@@ -152,7 +175,7 @@ export default function ClientProducts() {
             searchTerm.trim() !== "") && (
             <button
               onClick={() => {
-                setFilters({
+                updateFilters({
                   sortBy: "default",
                   stockFilter: "all",
                   categoryFilter: "all",
@@ -161,7 +184,7 @@ export default function ClientProducts() {
               }}
               className="bg-primary text-primary-foreground hover:bg-primary/90 rounded px-3 py-1 text-xs transition-colors"
             >
-              Reset All Filters
+              {t("resetAllFilters")}
             </button>
           )}
         </motion.div>
@@ -191,8 +214,8 @@ export default function ClientProducts() {
                 exit={{ opacity: 0 }}
               >
                 <ErrorState
-                  title="Failed to load products"
-                  description="We couldn't load the products. Please try again."
+                  title={t("failedToLoad")}
+                  description={t("failedToLoadDescription")}
                   onRetry={retry}
                   error={error}
                   type="network"
@@ -208,15 +231,15 @@ export default function ClientProducts() {
                 <ErrorState
                   title={
                     (products?.length || 0) === 0
-                      ? "No products available"
-                      : "No products match your filters"
+                      ? t("noProductsAvailable")
+                      : t("noProductsMatch")
                   }
                   description={
                     (products?.length || 0) === 0
-                      ? "No products are currently available. Please check back later."
+                      ? t("noProductsAvailableDescription")
                       : searchTerm.trim() !== ""
-                        ? "Try a different search term or adjust your filters."
-                        : "Try adjusting your filters to see more products."
+                        ? t("tryDifferentSearch")
+                        : t("tryAdjustingFilters")
                   }
                   showRetry={false}
                   type="not-found"
@@ -225,7 +248,7 @@ export default function ClientProducts() {
                   <div className="mt-4 text-center">
                     <button
                       onClick={() => {
-                        setFilters({
+                        updateFilters({
                           sortBy: "default",
                           stockFilter: "all",
                           categoryFilter: "all",
@@ -234,7 +257,7 @@ export default function ClientProducts() {
                       }}
                       className="bg-primary text-primary-foreground hover:bg-primary/90 rounded px-4 py-2 transition-colors"
                     >
-                      Clear All Filters
+                      {t("clearAllFilters")}
                     </button>
                   </div>
                 )}
@@ -242,28 +265,14 @@ export default function ClientProducts() {
             ) : (
               <motion.div
                 key="products"
-                className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <AnimatePresence>
-                  {processedProducts.map((product, index) => (
-                    <motion.div
-                      key={product.product_id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{
-                        duration: 0.3,
-                        delay: index * 0.1,
-                      }}
-                    >
-                      <ProductCard product={product} />
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                <ProductGrid
+                  products={processedProducts}
+                />
               </motion.div>
             )}
           </AnimatePresence>

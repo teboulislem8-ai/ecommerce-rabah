@@ -145,7 +145,7 @@ export function OrdersTable() {
                 <th
                   key={header.id}
                   scope="col"
-                  className="cursor-pointer px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+                  className="cursor-pointer px-6 py-3 text-start text-xs font-medium tracking-wider text-gray-500 uppercase"
                   onClick={header.column.getToggleSortingHandler()}
                 >
                   <div className="flex items-center space-x-1">
@@ -192,7 +192,7 @@ export function OrdersTable() {
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            <ChevronLeft className="mr-2 h-4 w-4" />
+            <ChevronRight className="ms-2 h-4 w-4" />
             Previous
           </Button>
           <div className="flex items-center space-x-2">
@@ -211,7 +211,7 @@ export function OrdersTable() {
             disabled={!table.getCanNextPage()}
           >
             Next
-            <ChevronRight className="ml-2 h-4 w-4" />
+            <ChevronLeft className="me-2 h-4 w-4" />
           </Button>
         </div>
       </div>

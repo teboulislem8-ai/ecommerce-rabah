@@ -73,7 +73,7 @@ export const profileService = {
           ...data,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', userId)
+        .eq('profile_id', userId)
         .select('*')
         .single();
 
@@ -180,19 +180,14 @@ export const profileService = {
             continue;
           }
 
-          // Get file paths to delete (excluding current avatar if it's in this bucket)
+          // Get file paths to delete (only the old avatar, keep everything else)
           const filesToDelete = files
             .map((file) => `${userId}/${file.name}`)
             .filter((path) => {
-              // Skip the current avatar if it's in this bucket
-              if (
-                bucketName === currentBucket &&
-                currentPath &&
-                currentPath.includes(path)
-              ) {
-                return false;
-              }
-              return true;
+              // Skip if no current (old) avatar to delete
+              if (!currentBucket || !currentPath) return false;
+              // Only delete files that match the old avatar path
+              return path.includes(currentPath);
             });
 
           if (filesToDelete.length > 0) {
@@ -336,7 +331,7 @@ export const profileService = {
       const { error } = await supabase
         .from('profiles')
         .delete()
-        .eq('id', userId);
+        .eq('profile_id', userId);
 
       if (error) {
         console.error('Error deleting profile:', error);

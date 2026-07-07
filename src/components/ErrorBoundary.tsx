@@ -78,7 +78,7 @@ function DefaultErrorFallback({ error, reset }: ErrorFallbackProps) {
             We encountered an unexpected error. Please try again.
           </CardDescription>
           {error && (
-            <details className="mt-4 text-left">
+            <details className="mt-4 text-start">
               <summary className="cursor-pointer text-sm font-medium">
                 Error details
               </summary>
@@ -90,7 +90,7 @@ function DefaultErrorFallback({ error, reset }: ErrorFallbackProps) {
         </CardHeader>
         <CardContent>
           <Button onClick={reset} className="cursor-pointer">
-            <RefreshCw className="mr-2 h-4 w-4" />
+            <RefreshCw className="ms-2 h-4 w-4" />
             Try Again
           </Button>
         </CardContent>

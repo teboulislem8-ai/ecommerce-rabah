@@ -4,12 +4,15 @@ import { OrderHistoryChart } from "./OrderHistoryChart";
 import { PaymentDistributionChart } from "./PaymentDistributionChart";
 import { OrderStatusChart } from "./OrderStatusChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslations } from "next-intl";
+import { formatCurrency } from "@/utils/formatCurrency";
 
 interface DashboardChartsProps {
   orders: OrderType[];
 }
 
 export function DashboardCharts({ orders }: DashboardChartsProps) {
+  const t = useTranslations("dashboard");
   // Calculate summary metrics
   const totalOrderAmount = orders.reduce((sum, order) => sum + order.total, 0);
   const averageOrderValue = orders.length
@@ -35,7 +38,7 @@ export function DashboardCharts({ orders }: DashboardChartsProps) {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-muted-foreground text-sm font-medium">
-              Total Orders
+              {t("totalOrders")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -46,12 +49,12 @@ export function DashboardCharts({ orders }: DashboardChartsProps) {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-muted-foreground text-sm font-medium">
-              Total Revenue
+              {t("totalRevenue")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${totalOrderAmount.toFixed(2)}
+              {formatCurrency(totalOrderAmount)}
             </div>
           </CardContent>
         </Card>
@@ -59,12 +62,12 @@ export function DashboardCharts({ orders }: DashboardChartsProps) {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-muted-foreground text-sm font-medium">
-              Average Order Value
+              {t("averageOrder")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${averageOrderValue.toFixed(2)}
+              {formatCurrency(averageOrderValue)}
             </div>
           </CardContent>
         </Card>
@@ -72,12 +75,12 @@ export function DashboardCharts({ orders }: DashboardChartsProps) {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-muted-foreground text-sm font-medium">
-              Last 30 Days Revenue
+              {t("lastMonth")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${lastMonthTotal.toFixed(2)}
+              {formatCurrency(lastMonthTotal)}
             </div>
           </CardContent>
         </Card>
@@ -87,7 +90,7 @@ export function DashboardCharts({ orders }: DashboardChartsProps) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="col-span-1 lg:col-span-2">
           <CardHeader>
-            <CardTitle>Order Trends</CardTitle>
+            <CardTitle>{t("orderTrends")}</CardTitle>
           </CardHeader>
           <CardContent>
             <OrderHistoryChart orders={orders} />
@@ -96,7 +99,7 @@ export function DashboardCharts({ orders }: DashboardChartsProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Payment Methods</CardTitle>
+            <CardTitle>{t("paymentMethods")}</CardTitle>
           </CardHeader>
           <CardContent>
             <PaymentDistributionChart orders={orders} />
@@ -105,7 +108,7 @@ export function DashboardCharts({ orders }: DashboardChartsProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Order Status</CardTitle>
+            <CardTitle>{t("orderStatus")}</CardTitle>
           </CardHeader>
           <CardContent>
             <OrderStatusChart orders={orders} />

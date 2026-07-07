@@ -15,12 +15,17 @@ interface AdminData {
  * Uses the admin_users view which filters profiles where role='admin'
  */
 export function useAdmin(): AdminData {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading) {
+      setLoading(true);
+      return;
+    }
+
     const checkAdminStatus = async () => {
       if (!user) {
         setIsAdmin(false);
@@ -44,7 +49,7 @@ export function useAdmin(): AdminData {
           if (queryError.code === "PGRST116") {
             setIsAdmin(false);
           } else {
-            console.error("Error checking admin status:", queryError);
+            console.error("Error checking admin status:", JSON.stringify(queryError));
             setError("Failed to verify admin status");
             setIsAdmin(false);
           }
@@ -62,7 +67,7 @@ export function useAdmin(): AdminData {
     };
 
     checkAdminStatus();
-  }, [user]);
+  }, [user, authLoading]);
 
   return { isAdmin, loading, error };
 }

@@ -3,6 +3,7 @@ import { OrderType } from "@/types";
 import { useEffect, useState } from "react";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Pie } from "react-chartjs-2";
+import { useTranslations } from "next-intl";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -21,6 +22,7 @@ interface ChartDataset {
 export function PaymentDistributionChart({
   orders,
 }: PaymentDistributionChartProps) {
+  const t = useTranslations("dashboard");
   const [chartData, setChartData] = useState<{
     labels: string[];
     datasets: ChartDataset[];
@@ -42,7 +44,7 @@ export function PaymentDistributionChart({
     const paymentMethods: Record<string, number> = {};
 
     orders.forEach((order) => {
-      const paymentMethod = order.payment_method || "Other";
+      const paymentMethod = order.payment_method || t("other");
 
       if (!paymentMethods[paymentMethod]) {
         paymentMethods[paymentMethod] = 0;
@@ -58,7 +60,7 @@ export function PaymentDistributionChart({
       labels,
       datasets: [
         {
-          label: "Payment Amount ($)",
+          label: t("paymentAmount"),
           data,
           backgroundColor: [
             "rgba(255, 99, 132, 0.5)",
@@ -91,7 +93,7 @@ export function PaymentDistributionChart({
       },
       title: {
         display: true,
-        text: "Payment Distribution",
+        text: t("paymentDistribution"),
         font: {
           size: 16,
         },
@@ -102,7 +104,7 @@ export function PaymentDistributionChart({
   if (!orders || orders.length === 0) {
     return (
       <div className="bg-muted/10 flex h-64 items-center justify-center rounded-lg border">
-        <p className="text-muted-foreground">No payment data available</p>
+        <p className="text-muted-foreground">{t("noPaymentData")}</p>
       </div>
     );
   }

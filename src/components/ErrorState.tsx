@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { AlertCircle, RefreshCw, Home, WifiOff } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 interface ErrorStateProps {
   title?: string;
@@ -30,36 +31,33 @@ export function ErrorState({
   error,
   type = "general",
 }: ErrorStateProps) {
+  const t = useTranslations("errors");
+
   const getErrorConfig = () => {
     switch (type) {
       case "network":
         return {
           icon: <WifiOff className="text-destructive h-8 w-8" />,
-          title: title || "Connection Error",
-          description:
-            description ||
-            "Unable to connect to the server. Please check your internet connection.",
+          title: title || t("connectionError"),
+          description: description || t("connectionErrorDescription"),
         };
       case "not-found":
         return {
           icon: <AlertCircle className="text-muted-foreground h-8 w-8" />,
-          title: title || "No Data Found",
-          description: description || "The requested data could not be found.",
+          title: title || t("noDataFound"),
+          description: description || t("noDataDescription"),
         };
       case "permission":
         return {
           icon: <AlertCircle className="text-destructive h-8 w-8" />,
-          title: title || "Access Denied",
-          description:
-            description || "You don't have permission to access this resource.",
+          title: title || t("accessDenied"),
+          description: description || t("accessDeniedDescription"),
         };
       default:
         return {
           icon: <AlertCircle className="text-destructive h-8 w-8" />,
-          title: title || "Something went wrong",
-          description:
-            description ||
-            "An unexpected error occurred while loading the data.",
+          title: title || t("somethingWentWrong"),
+          description: description || t("unexpectedError"),
         };
     }
   };
@@ -76,9 +74,9 @@ export function ErrorState({
           <CardTitle className="text-xl font-bold">{config.title}</CardTitle>
           <CardDescription>{config.description}</CardDescription>
           {error && (
-            <details className="mt-4 text-left">
+            <details className="mt-4 text-start">
               <summary className="cursor-pointer text-sm font-medium">
-                Error details
+                {t("errorDetails")}
               </summary>
               <pre className="text-muted-foreground bg-muted mt-2 overflow-auto rounded p-2 text-xs">
                 {error.message}
@@ -89,8 +87,8 @@ export function ErrorState({
         <CardContent className="space-y-2">
           {showRetry && onRetry && (
             <Button onClick={onRetry} className="w-full cursor-pointer">
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Try Again
+              <RefreshCw className="ms-2 h-4 w-4" />
+              {t("tryAgain")}
             </Button>
           )}
           {showHomeButton && (
@@ -100,8 +98,8 @@ export function ErrorState({
               variant="outline"
               className="w-full cursor-pointer"
             >
-              <Home className="mr-2 h-4 w-4" />
-              Go Home
+              <Home className="ms-2 h-4 w-4" />
+              {t("goHome")}
             </Button>
           )}
         </CardContent>

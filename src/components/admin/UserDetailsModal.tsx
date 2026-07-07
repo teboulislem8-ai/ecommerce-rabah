@@ -88,7 +88,7 @@ export function UserDetailsModal({
         </DialogHeader>
 
         <ScrollArea className="max-h-[60vh]">
-          <div className="space-y-6 pr-4">
+          <div className="space-y-6 pe-4">
             {/* User Summary */}
             <div className="grid grid-cols-2 gap-4">
               <div className="flex items-center gap-2">

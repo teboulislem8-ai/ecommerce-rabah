@@ -17,6 +17,7 @@ import { useOrder } from "@/hooks/queries";
 import { formatCurrency } from "@/utils/formatCurrency";
 import { format } from "date-fns";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 interface OrderDetailsModalProps {
   isOpen: boolean;
@@ -45,6 +46,7 @@ export function OrderDetailsModal({
   onClose,
   order,
 }: OrderDetailsModalProps) {
+  const t = useTranslations("orderDetailsModal");
   // Use the query hook to fetch order details
   const { data: orderDetails, isLoading: loading } = useOrder(
     isOpen && order ? order.id.toString() : "",
@@ -58,40 +60,40 @@ export function OrderDetailsModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
-            Order #{order.id}
+            {t("title", { id: order.id })}
           </DialogTitle>
           <DialogDescription>
-            View detailed order information, customer details, and items
+            {t("description")}
           </DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="max-h-[60vh]">
-          <div className="space-y-6 pr-4">
+          <div className="space-y-6 pe-4">
             {/* Order Summary */}
             <div className="grid grid-cols-2 gap-4">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-slate-500" />
                 <div>
-                  <p className="text-sm font-medium text-slate-700">
-                    Order Date
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    {order.created_at
-                      ? format(
-                          new Date(order.created_at),
-                          "MMM dd, yyyy 'at' HH:mm",
-                        )
-                      : "Unknown date"}
-                  </p>
+                    <p className="text-sm font-medium text-slate-700">
+                      {t("orderDate")}
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      {order.created_at
+                        ? format(
+                            new Date(order.created_at),
+                            "MMM dd, yyyy 'at' HH:mm",
+                          )
+                        : t("unknownDate")}
+                    </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-slate-500" />
                 <div>
-                  <p className="text-sm font-medium text-slate-700">
-                    Total Amount
-                  </p>
+                    <p className="text-sm font-medium text-slate-700">
+                      {t("totalAmount")}
+                    </p>
                   <p className="text-lg font-bold text-emerald-600">
                     {formatCurrency(order.total)}
                   </p>
@@ -101,7 +103,7 @@ export function OrderDetailsModal({
               <div className="flex items-center gap-2">
                 <Package className="h-4 w-4 text-slate-500" />
                 <div>
-                  <p className="text-sm font-medium text-slate-700">Status</p>
+                  <p className="text-sm font-medium text-slate-700">{t("status")}</p>
                   <Badge className={`${getStatusColor(order.status)} border`}>
                     {order.status}
                   </Badge>
@@ -111,12 +113,12 @@ export function OrderDetailsModal({
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-slate-500" />
                 <div>
-                  <p className="text-sm font-medium text-slate-700">
-                    Payment Method
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    {order.payment_method || "Not specified"}
-                  </p>
+                    <p className="text-sm font-medium text-slate-700">
+                      {t("paymentMethod")}
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      {order.payment_method || t("notSpecified")}
+                    </p>
                 </div>
               </div>
             </div>
@@ -127,19 +129,19 @@ export function OrderDetailsModal({
             <div>
               <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold">
                 <User className="h-5 w-5" />
-                Customer Information
+                {t("customerInformation")}
               </h3>
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <div>
-                  <p className="text-sm font-medium text-slate-700">Name</p>
+                  <p className="text-sm font-medium text-slate-700">{t("name")}</p>
                   <p className="text-sm text-slate-600">
-                    {order.profile?.username || "Not provided"}
+                    {order.profile?.username || t("notProvided")}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-700">Email</p>
+                  <p className="text-sm font-medium text-slate-700">{t("email")}</p>
                   <p className="text-sm text-slate-600">
-                    {order.profile?.email || "Not provided"}
+                    {order.profile?.email || t("notProvided")}
                   </p>
                 </div>
               </div>
@@ -153,7 +155,7 @@ export function OrderDetailsModal({
                 <div>
                   <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold">
                     <MapPin className="h-5 w-5" />
-                    Shipping Address
+                    {t("shippingAddress")}
                   </h3>
                   <div className="bg-card rounded-lg border p-4">
                     <p className="text-foreground font-medium">
@@ -177,13 +179,13 @@ export function OrderDetailsModal({
             <div>
               <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold">
                 <Package className="h-5 w-5" />
-                Order Items
+                {t("orderItems")}
               </h3>
 
               {loading ? (
                 <div className="flex h-32 items-center justify-center">
                   <div className="text-muted-foreground text-sm">
-                    Loading items...
+                    {t("loadingItems")}
                   </div>
                 </div>
               ) : orderDetails?.order_items ? (
@@ -214,14 +216,14 @@ export function OrderDetailsModal({
                           {item.product?.title || "Product"}
                         </h4>
                         <p className="text-muted-foreground text-sm">
-                          Quantity: {item.quantity}
+                          {t("quantity", { n: item.quantity })}
                         </p>
                         <p className="text-muted-foreground text-sm">
-                          Unit Price: {formatCurrency(item.price)}
+                          {t("unitPrice", { amount: formatCurrency(item.price) })}
                         </p>
                       </div>
 
-                      <div className="text-right">
+                      <div className="text-end">
                         <p className="text-foreground font-semibold">
                           {formatCurrency(item.quantity * item.price)}
                         </p>
@@ -233,7 +235,7 @@ export function OrderDetailsModal({
                   <div className="bg-card rounded-lg border p-4">
                     <div className="flex justify-between">
                       <span className="text-foreground text-lg font-semibold">
-                        Total:
+                        {t("total")}
                       </span>
                       <span className="text-lg font-bold text-emerald-600">
                         {formatCurrency(order.total)}
@@ -245,7 +247,7 @@ export function OrderDetailsModal({
                 <div className="bg-card rounded-lg border p-8 text-center">
                   <Package className="text-muted-foreground mx-auto mb-3 h-12 w-12" />
                   <p className="text-muted-foreground">
-                    No items found for this order
+                    {t("noItems")}
                   </p>
                 </div>
               )}
@@ -255,7 +257,7 @@ export function OrderDetailsModal({
 
         <div className="flex justify-end gap-2 border-t pt-4">
           <Button variant="outline" onClick={onClose}>
-            Close
+            {t("close")}
           </Button>
         </div>
       </DialogContent>

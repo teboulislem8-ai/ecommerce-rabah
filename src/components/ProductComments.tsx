@@ -315,14 +315,14 @@ export function ProductComments() {
                       </Button>
 
                       {openDropdownId === comment.id && (
-                        <div className="bg-background border-border absolute top-full right-0 z-10 mt-1 min-w-[120px] rounded-md border shadow-lg">
+                        <div className="bg-background border-border absolute top-full end-0 z-10 mt-1 min-w-[120px] rounded-md border shadow-lg">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteComment(comment.id)}
                             className="text-destructive hover:text-destructive hover:bg-destructive/10 w-full cursor-pointer justify-start"
                           >
-                            <Trash2 className="mr-2 h-4 w-4" />
+                            <Trash2 className="ms-2 h-4 w-4" />
                             Delete
                           </Button>
                         </div>
@@ -347,7 +347,7 @@ export function ProductComments() {
                       }`}
                     >
                       <ThumbsUp
-                        className="mr-1 h-4 w-4"
+                        className="ms-1 h-4 w-4"
                         fill={
                           helpfulComments.has(comment.id)
                             ? "currentColor"

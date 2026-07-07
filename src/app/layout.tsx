@@ -1,24 +1,20 @@
 import { AuthProvider } from "@/context/AuthContext";
-import { CartProvider } from "@/context/CartContext";
 import { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Navbar } from "@/components/Navbar";
-import Sidebar  from "@/components/Sidebar";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { TanStackQueryProvider } from "@/lib/providers/query-provider";
 import { Toaster } from "sonner";
-import { MainLayout } from "@/components/MainLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { DemoBanner } from "@/components/DemoBanner";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "../../messages/dz.json";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
-  title: "E-Commerce",
-  description: "E-Commerce App",
+  title: "",
+  description: "",
 };
 
 export default function RootLayout({
@@ -27,38 +23,34 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
+    <html lang="ar" dir="rtl" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');var d=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches);var h=document.documentElement;h.classList.toggle('dark',d);h.style.colorScheme=d?'dark':'light'}catch(e){}})()`,
+          }}
+        />
         <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-        <title>My App</title>
-        <meta name="description" content="My App is a..." />
       </head>
-      <body className="bg-background min-h-screen">
+      <body>
         <ErrorBoundary>
           <TanStackQueryProvider>
             <AuthProvider>
-              <CartProvider>
+              <NextIntlClientProvider locale="dz" messages={messages}>
                 <ThemeProvider
                   attribute="class"
                   defaultTheme="system"
                   enableSystem
                   disableTransitionOnChange
                 >
-                  <SidebarProvider>
-                    <Sidebar />
-                    <SidebarInset>
-                      <DemoBanner />
-                      <Navbar />
-                      <MainLayout>{children}</MainLayout>
-                    </SidebarInset>
-                  </SidebarProvider>
+                  {children}
                 </ThemeProvider>
-              </CartProvider>
+            </NextIntlClientProvider>
             </AuthProvider>
           </TanStackQueryProvider>
         </ErrorBoundary>
         <Toaster
-          theme="light" // or "dark" or "system"
+          theme="light"
           toastOptions={{
             unstyled: false,
             classNames: {
@@ -69,7 +61,6 @@ export default function RootLayout({
             },
           }}
         />
-        
       </body>
     </html>
   );

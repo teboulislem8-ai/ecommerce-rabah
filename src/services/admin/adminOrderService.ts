@@ -251,26 +251,26 @@ export const adminOrderService = {
    */
   async getOrderAnalytics(): Promise<OrderAnalytics> {
     try {
-      // Get all orders for analytics
       const { data: orders, error } = await supabase
         .from("orders")
-        .select(
-          `
-					*,
-					profiles (
-						username,
-						email
-					)
-				`,
-        )
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Error fetching orders for analytics:", error);
+        console.error("Error fetching orders for analytics:", JSON.stringify(error, null, 2));
         throw error;
       }
 
       const allOrders = orders || [];
+
+      // Batch-fetch profiles for unique user_ids
+      const userIds = [...new Set(allOrders.map((o) => o.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("profile_id, username, email")
+        .in("profile_id", userIds);
+      const profilesMap = new Map((profiles || []).map((p) => [p.profile_id, p]));
+      const getProfile = (userId: string) => profilesMap.get(userId) || { username: "Unknown", email: "Unknown" };
 
       // Calculate basic metrics
       const totalOrders = allOrders.length;
@@ -293,18 +293,19 @@ export const adminOrderService = {
       // Recent orders (last 10)
       const recentOrders = allOrders.slice(0, 10).map((order) => ({
         ...order,
-        profile: order.profiles,
+        profile: getProfile(order.user_id),
       }));
 
       // Top customers
       const customerStats = allOrders.reduce<Record<string, CustomerStat>>(
         (acc, order) => {
           const userId = order.user_id;
+          const profile = getProfile(userId);
           if (!acc[userId]) {
             acc[userId] = {
               userId,
-              username: order.profiles?.username || "Unknown",
-              email: order.profiles?.email || "Unknown",
+              username: profile.username,
+              email: profile.email,
               totalOrders: 0,
               totalSpent: 0,
             };
@@ -329,7 +330,7 @@ export const adminOrderService = {
         topCustomers,
       };
     } catch (err) {
-      console.error("Failed to get order analytics:", err);
+      console.error("Failed to get order analytics:", JSON.stringify(err, null, 2));
       return {
         totalOrders: 0,
         totalRevenue: 0,
@@ -407,7 +408,7 @@ export const adminOrderService = {
         .select(
           `
 					*,
-					profiles (
+					profiles!orders_user_id_fkey (
 						username,
 						email
 					)

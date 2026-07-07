@@ -33,14 +33,21 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protect routes that require authentication
-  const protectedPaths = ['/profile', '/checkout', '/cart'];
-  const isProtectedPath = protectedPaths.some((path) =>
+  const publicStorefrontPaths = ['/', '/products', '/checkout'];
+  const authPaths = ['/signin', '/signup', '/reset-password'];
+
+  const isStorefront = publicStorefrontPaths.some((path) =>
+    request.nextUrl.pathname.startsWith(path)
+  );
+  const isAuthPage = authPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   );
 
-  if (isProtectedPath && !user) {
-    // Store the original URL to redirect back after login
+  if (isStorefront || isAuthPage) {
+    return response;
+  }
+
+  if (!user) {
     const returnTo = encodeURIComponent(request.nextUrl.pathname);
     return NextResponse.redirect(
       new URL(`/signin?returnTo=${returnTo}`, request.url)

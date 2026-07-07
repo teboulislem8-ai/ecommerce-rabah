@@ -11,6 +11,7 @@ import {
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
+import { useTranslations } from "next-intl";
 
 ChartJS.register(
   CategoryScale,
@@ -34,6 +35,7 @@ interface ChartDataset {
 }
 
 export function OrderHistoryChart({ orders }: OrderHistoryChartProps) {
+  const t = useTranslations("dashboard");
   const [chartData, setChartData] = useState<{
     labels: string[];
     datasets: ChartDataset[];
@@ -87,14 +89,14 @@ export function OrderHistoryChart({ orders }: OrderHistoryChartProps) {
       labels,
       datasets: [
         {
-          label: "Order Amount ($)",
+          label: t("orderAmount"),
           data: totals,
           backgroundColor: "rgba(53, 162, 235, 0.5)",
           borderColor: "rgba(53, 162, 235, 1)",
           borderWidth: 1,
         },
         {
-          label: "Order Count",
+          label: t("orderCount"),
           data: counts,
           backgroundColor: "rgba(255, 99, 132, 0.5)",
           borderColor: "rgba(255, 99, 132, 1)",
@@ -113,7 +115,7 @@ export function OrderHistoryChart({ orders }: OrderHistoryChartProps) {
       },
       title: {
         display: true,
-        text: "Order History",
+        text: t("orderHistoryTitle"),
         font: {
           size: 16,
         },
@@ -129,7 +131,7 @@ export function OrderHistoryChart({ orders }: OrderHistoryChartProps) {
   if (!orders || orders.length === 0) {
     return (
       <div className="bg-muted/10 flex h-64 items-center justify-center rounded-lg border">
-        <p className="text-muted-foreground">No order data available</p>
+        <p className="text-muted-foreground">{t("noOrderData")}</p>
       </div>
     );
   }

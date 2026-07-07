@@ -3,6 +3,7 @@ import { OrderType } from "@/types";
 import { useEffect, useState } from "react";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
+import { useTranslations } from "next-intl";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -19,6 +20,7 @@ interface ChartDataset {
 }
 
 export function OrderStatusChart({ orders }: OrderStatusChartProps) {
+  const t = useTranslations("dashboard");
   const [chartData, setChartData] = useState<{
     labels: string[];
     datasets: ChartDataset[];
@@ -57,7 +59,7 @@ export function OrderStatusChart({ orders }: OrderStatusChartProps) {
       labels,
       datasets: [
         {
-          label: "Orders",
+          label: t("ordersLabel"),
           data,
           backgroundColor: [
             "rgba(75, 192, 192, 0.5)", // Delivered
@@ -88,7 +90,7 @@ export function OrderStatusChart({ orders }: OrderStatusChartProps) {
       },
       title: {
         display: true,
-        text: "Order Status Distribution",
+        text: t("orderStatusDistribution"),
         font: {
           size: 16,
         },
@@ -100,7 +102,7 @@ export function OrderStatusChart({ orders }: OrderStatusChartProps) {
   if (!orders || orders.length === 0) {
     return (
       <div className="bg-muted/10 flex h-64 items-center justify-center rounded-lg border">
-        <p className="text-muted-foreground">No order status data available</p>
+        <p className="text-muted-foreground">{t("noOrderStatusData")}</p>
       </div>
     );
   }
