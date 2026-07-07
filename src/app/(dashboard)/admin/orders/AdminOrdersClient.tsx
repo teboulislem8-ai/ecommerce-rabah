@@ -226,7 +226,7 @@ export default function AdminOrdersClient() {
                 setStatusFilter(status);
                 setPage(1);
               }}
-              className={`cursor-pointer rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              className={`cursor-pointer rounded-full px-4 py-2 text-sm font-medium transition-colors min-h-[44px] ${
                 statusFilter === status
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:text-foreground"
@@ -332,7 +332,7 @@ export default function AdminOrdersClient() {
                         )}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex cursor-pointer items-center gap-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700"
+                        className="inline-flex cursor-pointer items-center gap-1 rounded-md bg-green-600 px-3 py-2.5 text-xs font-medium text-white hover:bg-green-700 min-h-[44px]"
                       >
                         <MessageCircle className="h-3.5 w-3.5" />
                         WhatsApp
@@ -346,7 +346,7 @@ export default function AdminOrdersClient() {
                           variant={ns.variant as "default" | "outline" | "destructive"}
                           onClick={() => handleStatusUpdate(order.id, ns.value)}
                           disabled={updatingId === order.id}
-                          className="cursor-pointer text-xs"
+                          className="cursor-pointer text-xs min-h-[44px]"
                         >
                           {ns.label}
                         </Button>

@@ -115,16 +115,16 @@ export default function AdminProductsClient() {
 
   return (
     <div className="container mx-auto space-y-6 py-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
             {t("productManagement")}
           </h1>
           <p className="text-muted-foreground">{t("manageProductCatalog")}</p>
         </div>
         <Button
           onClick={() => setShowCreateModal(true)}
-          className="cursor-pointer transition-transform hover:scale-105"
+          className="cursor-pointer transition-transform hover:scale-105 min-h-[44px]"
         >
           <Plus className="ms-2 h-4 w-4" />
           {t("addProduct")}
@@ -225,33 +225,30 @@ export default function AdminProductsClient() {
                 )}
               </div>
 
-              <div className="flex space-x-2">
-                <Link href={`/products/${product.product_id}`}>
+              <div className="flex gap-2">
+                <Link href={`/products/${product.product_id}`} className="flex-1">
                   <Button
                     variant="outline"
-                    size="sm"
-                    className="hover:bg-accent/80 flex-1 cursor-pointer transition-all hover:scale-105"
+                    className="w-full cursor-pointer transition-all hover:scale-105 min-h-[44px] text-xs sm:text-sm"
                   >
-                    <Eye className="ms-2 h-3 w-3" />
+                    <Eye className="ms-1 h-3.5 w-3.5" />
                     {t("view")}
                   </Button>
                 </Link>
                 <Button
                   variant="outline"
-                  size="sm"
                   onClick={() => setEditingProduct(product)}
-                  className="hover:bg-accent/80 flex-1 cursor-pointer transition-all hover:scale-105"
+                  className="flex-1 cursor-pointer transition-all hover:scale-105 min-h-[44px] text-xs sm:text-sm"
                 >
-                    <Edit className="ms-2 h-3 w-3" />
+                    <Edit className="ms-1 h-3.5 w-3.5" />
                     {t("edit")}
                 </Button>
                 <Button
                   variant="outline"
-                  size="sm"
                   onClick={() => setDeletingProduct(product)}
-                  className="cursor-pointer text-red-600 transition-all hover:scale-105 hover:bg-red-50 hover:text-red-700"
+                  className="cursor-pointer text-red-600 transition-all hover:scale-105 hover:bg-red-50 hover:text-red-700 min-h-[44px]"
                 >
-                  <Trash2 className="h-3 w-3" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </CardContent>

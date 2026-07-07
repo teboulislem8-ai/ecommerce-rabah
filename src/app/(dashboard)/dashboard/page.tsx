@@ -54,10 +54,10 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold tracking-tight">{d("title")}</h1>
 
         {/* Tabs */}
-        <div className="flex border-b">
+        <div className="flex flex-wrap border-b">
           <button
             onClick={() => setActiveTab("analytics")}
-            className={`hover:text-primary cursor-pointer px-4 py-2 font-medium transition-colors ${
+            className={`hover:text-primary cursor-pointer px-4 py-2.5 font-medium transition-colors ${
               activeTab === "analytics"
                 ? "border-primary text-primary border-b-2"
                 : "text-muted-foreground"
@@ -67,7 +67,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => setActiveTab("products")}
-            className={`hover:text-primary cursor-pointer px-4 py-2 font-medium transition-colors ${
+            className={`hover:text-primary cursor-pointer px-4 py-2.5 font-medium transition-colors ${
               activeTab === "products"
                 ? "border-primary text-primary border-b-2"
                 : "text-muted-foreground"
@@ -77,7 +77,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => setActiveTab("orders")}
-            className={`hover:text-primary cursor-pointer px-4 py-2 font-medium transition-colors ${
+            className={`hover:text-primary cursor-pointer px-4 py-2.5 font-medium transition-colors ${
               activeTab === "orders"
                 ? "border-primary text-primary border-b-2"
                 : "text-muted-foreground"
