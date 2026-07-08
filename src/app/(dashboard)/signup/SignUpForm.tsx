@@ -72,7 +72,9 @@ export function SignUpForm({ redirectTo }: { redirectTo?: string }) {
           city: cityInput,
         });
         if (!result.success) {
-          console.error("Profile creation error:", result.error);
+          setError(result.error);
+          setLoading(false);
+          return;
         }
       }
 

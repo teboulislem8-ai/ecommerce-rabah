@@ -58,11 +58,16 @@ export function SignInForm({
 
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await updateProfileAction({
+        const profileResult = await updateProfileAction({
           username: nameInput,
           phone: phoneInput,
           city: cityInput,
         });
+        if (!profileResult.success) {
+          setError(profileResult.error);
+          setLoading(false);
+          return;
+        }
 
         for (let i = 0; i < 10; i++) {
           const { data: p } = await supabase

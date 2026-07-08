@@ -38,8 +38,11 @@ export async function updateProfileAction(input: unknown): Promise<UpdateProfile
 
   const { error } = await supabase
     .from("profiles")
-    .update(parsed.data)
-    .eq("profile_id", user.id);
+    .upsert({
+      profile_id: user.id,
+      email: user.email || "",
+      ...parsed.data,
+    }, { onConflict: "profile_id" });
 
   if (error) {
     return { success: false, error: "فشل في تحديث الملف" };
