@@ -25,7 +25,10 @@ export function useSupabaseAuth() {
   const queryClient = useQueryClient();
   const lastUserIdRef = useRef<string | null>(null);
 
+  console.log("[auth] useSupabaseAuth mount", Date.now(), { loading });
+
   useEffect(() => {
+    console.log("[auth] useEffect start", Date.now());
     // Listen for auth state changes from other tabs
     let authChannel: BroadcastChannel | null = null;
     try {
@@ -58,6 +61,7 @@ export function useSupabaseAuth() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[auth] onAuthStateChange", Date.now(), { event, hasSession: !!session });
       const userId = session?.user?.id || null;
 
       if (event === 'SIGNED_OUT') {
@@ -77,7 +81,10 @@ export function useSupabaseAuth() {
       setLoading(false);
     });
 
+    console.log("[auth] onAuthStateChange subscribed", Date.now());
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("[auth] getSession resolved", Date.now(), { hasSession: !!session });
       lastUserIdRef.current = session?.user?.id || null;
       setSession(session);
       setUser(session?.user ?? null);

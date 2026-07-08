@@ -3,6 +3,7 @@ import ClientProducts from "@/components/ClientProducts";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export default function Home() {
+  console.log("[page] Home rendering start", Date.now());
   return (
     <ErrorBoundary>
       <div className="bg-background min-h-full">
