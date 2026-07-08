@@ -77,9 +77,23 @@ export function SignUpForm({ redirectTo }: { redirectTo?: string }) {
       }
 
       if (data?.user) {
-        const waUrl = await processPendingOrder();
-        if (waUrl) {
-          window.location.href = waUrl;
+        for (let i = 0; i < 10; i++) {
+          const { data: p } = await supabase
+            .from("profiles")
+            .select("profile_id")
+            .eq("profile_id", data.user.id)
+            .single();
+          if (p) break;
+          await new Promise((r) => setTimeout(r, 500));
+        }
+
+        const orderResult = await processPendingOrder();
+        if (orderResult?.whatsappUrl) {
+          window.location.href = orderResult.whatsappUrl;
+          return;
+        }
+        if (orderResult?.error) {
+          setError(orderResult.error);
           return;
         }
       }
@@ -168,6 +182,7 @@ export function SignUpForm({ redirectTo }: { redirectTo?: string }) {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
+              autoComplete="new-password"
             />
             <button
               type="button"
@@ -195,6 +210,7 @@ export function SignUpForm({ redirectTo }: { redirectTo?: string }) {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
+              autoComplete="new-password"
             />
             <button
               type="button"

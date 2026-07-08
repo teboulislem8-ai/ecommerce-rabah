@@ -60,12 +60,11 @@ export function useSupabaseAuth() {
     } = supabase.auth.onAuthStateChange((event, session) => {
       const userId = session?.user?.id || null;
 
-      // Clear all query caches when session changes
       if (event === 'SIGNED_OUT') {
-        queryClient.clear();
+        queryClient.invalidateQueries();
         broadcastAuthChange('SIGNED_OUT');
       } else if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-        queryClient.clear();
+        queryClient.invalidateQueries();
         broadcastAuthChange('SIGNED_IN', userId || undefined);
       }
 

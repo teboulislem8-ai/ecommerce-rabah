@@ -64,9 +64,23 @@ export function SignInForm({
           city: cityInput,
         });
 
-        const waUrl = await processPendingOrder();
-        if (waUrl) {
-          window.location.href = waUrl;
+        for (let i = 0; i < 10; i++) {
+          const { data: p } = await supabase
+            .from("profiles")
+            .select("profile_id")
+            .eq("profile_id", user.id)
+            .single();
+          if (p) break;
+          await new Promise((r) => setTimeout(r, 500));
+        }
+
+        const orderResult = await processPendingOrder();
+        if (orderResult?.whatsappUrl) {
+          window.location.href = orderResult.whatsappUrl;
+          return;
+        }
+        if (orderResult?.error) {
+          setError(orderResult.error);
           return;
         }
       }
@@ -168,6 +182,7 @@ export function SignInForm({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
             />
             <button
               type="button"

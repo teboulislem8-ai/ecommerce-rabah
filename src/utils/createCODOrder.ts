@@ -84,7 +84,7 @@ export function clearPendingOrder() {
   getChannel()?.postMessage(null);
 }
 
-export async function processPendingOrder(): Promise<string | null> {
+export async function processPendingOrder(): Promise<{ whatsappUrl?: string; error?: string } | null> {
   const pending = getPendingOrder();
   if (!pending) return null;
 
@@ -97,8 +97,8 @@ export async function processPendingOrder(): Promise<string | null> {
 
   if (result.success) {
     clearPendingOrder();
-    return result.whatsappUrl;
+    return { whatsappUrl: result.whatsappUrl };
   }
 
-  return null;
+  return { error: result.error };
 }

@@ -29,11 +29,15 @@ export async function createOrderAction(input: unknown): Promise<CreateOrderResu
     return { success: false, error: "يجب تسجيل الدخول أولاً" };
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileErr } = await supabase
     .from("profiles")
     .select("username, phone, city")
     .eq("profile_id", user.id)
     .single();
+
+  if (profileErr || !profile) {
+    return { success: false, error: "الملف الشخصي لم يكتمل بعد، حاول مرة أخرى" };
+  }
 
   const { productId, quantity, price, total } = parsed.data;
 
