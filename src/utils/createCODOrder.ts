@@ -91,8 +91,8 @@ export async function processPendingOrder(): Promise<{ whatsappUrl?: string; err
   const result = await createOrderAction({
     productId: pending.productId,
     quantity: pending.quantity,
-    price: pending.price,
-    total: pending.total,
+    price: Number(pending.price),
+    total: Number(pending.total),
   });
 
   if (result.success) {

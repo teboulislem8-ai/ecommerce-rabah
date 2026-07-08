@@ -46,8 +46,8 @@ export default function ProductDetailsClient({
       const result = await createOrderAction({
         productId: product.product_id,
         quantity,
-        price: product.price,
-        total,
+        price: Number(product.price),
+        total: Number(total),
       });
 
       if (result.success) {

@@ -6,9 +6,9 @@ import { revalidatePath } from "next/cache";
 
 const createOrderSchema = z.object({
   productId: z.string().uuid(),
-  quantity: z.number().int().min(1).max(100),
-  price: z.number().positive(),
-  total: z.number().positive(),
+  quantity: z.coerce.number().int().min(1).max(100),
+  price: z.coerce.number().positive(),
+  total: z.coerce.number().positive(),
 });
 
 export type CreateOrderResult =
