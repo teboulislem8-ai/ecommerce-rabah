@@ -87,7 +87,7 @@ export default function ClientProducts() {
       ...prev,
       categoryFilter: cat,
     }));
-  }, [searchParams]);
+  }, [searchParams?.toString()]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<FilterOptions>(() => {
