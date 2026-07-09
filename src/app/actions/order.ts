@@ -13,13 +13,13 @@ const createOrderSchema = z.object({
 
 export type CreateOrderResult =
   | { success: true; whatsappUrl: string }
-  | { success: false; error: string };
+  | { success: false; error: string; details: string };
 
 export async function createOrderAction(input: unknown): Promise<CreateOrderResult> {
   const parsed = createOrderSchema.safeParse(input);
   if (!parsed.success) {
     console.error("[createOrderAction] zod validation failed:", parsed.error);
-    return { success: false, error: "بيانات غير صالحة" };
+    return { success: false, error: "بيانات غير صالحة", details: parsed.error.message };
   }
 
   const supabase = await createServerSupabase();
@@ -28,7 +28,7 @@ export async function createOrderAction(input: unknown): Promise<CreateOrderResu
   } = await supabase.auth.getUser();
   if (!user) {
     console.error("[createOrderAction] no authenticated user");
-    return { success: false, error: "يجب تسجيل الدخول أولاً" };
+    return { success: false, error: "يجب تسجيل الدخول أولاً", details: "no-session" };
   }
 
   const { data: profile, error: profileErr } = await supabase
@@ -39,7 +39,7 @@ export async function createOrderAction(input: unknown): Promise<CreateOrderResu
 
   if (profileErr || !profile) {
     console.error("[createOrderAction] profile query failed:", profileErr, { userId: user.id });
-    return { success: false, error: "الملف الشخصي لم يكتمل بعد، حاول مرة أخرى" };
+    return { success: false, error: "الملف الشخصي لم يكتمل بعد، حاول مرة أخرى", details: profileErr?.message || "profile not found" };
   }
 
   const { productId, quantity, price, total } = parsed.data;
@@ -61,7 +61,7 @@ export async function createOrderAction(input: unknown): Promise<CreateOrderResu
 
   if (addrErr || !address) {
     console.error("[createOrderAction] address insert failed:", addrErr);
-    return { success: false, error: "فشل في إنشاء العنوان" };
+    return { success: false, error: "فشل في إنشاء العنوان", details: addrErr?.message || "unknown" };
   }
   console.log("[createOrderAction] address created:", address.id);
 
@@ -79,7 +79,7 @@ export async function createOrderAction(input: unknown): Promise<CreateOrderResu
 
   if (orderErr || !order) {
     console.error("[createOrderAction] order insert failed:", orderErr);
-    return { success: false, error: "فشل في إنشاء الطلب" };
+    return { success: false, error: "فشل في إنشاء الطلب", details: orderErr?.message || "unknown" };
   }
   console.log("[createOrderAction] order created:", order.id);
 
@@ -92,7 +92,7 @@ export async function createOrderAction(input: unknown): Promise<CreateOrderResu
 
   if (itemsErr) {
     console.error("[createOrderAction] order_items insert failed:", itemsErr);
-    return { success: false, error: "فشل في إضافة المنتجات" };
+    return { success: false, error: "فشل في إضافة المنتجات", details: itemsErr.message };
   }
   console.log("[createOrderAction] order_items created");
 

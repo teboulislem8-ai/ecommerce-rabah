@@ -53,6 +53,7 @@ export default function ProductDetailsClient({
       if (result.success) {
         window.location.href = result.whatsappUrl;
       } else {
+        console.error("[order] handleCODOrder failed:", result.details);
         toast.error(result.error);
       }
       return;
