@@ -111,6 +111,6 @@ export async function createOrderAction(input: unknown): Promise<CreateOrderResu
 
   return {
     success: true,
-    whatsappUrl: `https://wa.me/${whatsappNumber}?text=${msg}`,
+    whatsappUrl: `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${msg}`,
   };
 }
