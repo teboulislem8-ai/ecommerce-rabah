@@ -101,6 +101,5 @@ export async function processPendingOrder(): Promise<{ whatsappUrl?: string; err
     return { whatsappUrl: result.whatsappUrl };
   }
 
-  console.error("[order] processPendingOrder failed:", result.details);
   return { error: result.error };
 }

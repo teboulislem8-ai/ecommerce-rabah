@@ -58,24 +58,18 @@ const filterProducts = (products: ProductType[], filters: FilterOptions, categor
 };
 
 export default function ClientProducts() {
-  console.log("[ClientProducts] render start", Date.now());
   const t = useTranslations("clientProducts");
-  console.log("[ClientProducts] after useTranslations", Date.now());
   const {
     data: products = [],
     isLoading: loading,
     error,
     refetch: retry,
   } = useProducts();
-  console.log("[ClientProducts] after useProducts", Date.now(), { loading, hasProducts: products.length > 0, error: !!error });
 
   const categoryMap = useCategoryMap();
-  console.log("[ClientProducts] after useCategoryMap", Date.now());
   const searchParams = useSearchParams();
-  console.log("[ClientProducts] after useSearchParams", Date.now(), { params: searchParams?.toString() });
   const router = useRouter();
   const pathname = usePathname();
-  console.log("[ClientProducts] after useRouter/usePathname", Date.now());
 
   // Sync URL changes (back/forward) back to filters — skip if we wrote this URL
   const lastSyncedCat = useRef<string | null>(null);

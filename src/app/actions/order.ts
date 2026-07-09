@@ -14,13 +14,13 @@ const createOrderSchema = z.object({
 
 export type CreateOrderResult =
   | { success: true; whatsappUrl: string }
-  | { success: false; error: string; details: string };
+  | { success: false; error: string };
 
 export async function createOrderAction(input: unknown): Promise<CreateOrderResult> {
   const parsed = createOrderSchema.safeParse(input);
   if (!parsed.success) {
     console.error("[createOrderAction] zod validation failed:", parsed.error);
-    return { success: false, error: "بيانات غير صالحة", details: parsed.error.message };
+    return { success: false, error: "بيانات غير صالحة" };
   }
 
   const supabase = await createServerSupabase();
@@ -29,7 +29,7 @@ export async function createOrderAction(input: unknown): Promise<CreateOrderResu
   } = await supabase.auth.getUser();
   if (!user) {
     console.error("[createOrderAction] no authenticated user");
-    return { success: false, error: "يجب تسجيل الدخول أولاً", details: "no-session" };
+    return { success: false, error: "يجب تسجيل الدخول أولاً" };
   }
 
   const { data: profile, error: profileErr } = await supabase
@@ -40,11 +40,10 @@ export async function createOrderAction(input: unknown): Promise<CreateOrderResu
 
   if (profileErr || !profile) {
     console.error("[createOrderAction] profile query failed:", profileErr, { userId: user.id });
-    return { success: false, error: "الملف الشخصي لم يكتمل بعد، حاول مرة أخرى", details: profileErr?.message || "profile not found" };
+    return { success: false, error: "الملف الشخصي لم يكتمل بعد، حاول مرة أخرى" };
   }
 
   const { productId, quantity, price, total, title } = parsed.data;
-  console.log("[createOrderAction] creating order", { productId, quantity, price, total, userId: user.id, profile });
 
   const { data: address, error: addrErr } = await supabase
     .from("addresses")
@@ -62,9 +61,8 @@ export async function createOrderAction(input: unknown): Promise<CreateOrderResu
 
   if (addrErr || !address) {
     console.error("[createOrderAction] address insert failed:", addrErr);
-    return { success: false, error: "فشل في إنشاء العنوان", details: addrErr?.message || "unknown" };
+    return { success: false, error: "فشل في إنشاء العنوان" };
   }
-  console.log("[createOrderAction] address created:", address.id);
 
   const { data: order, error: orderErr } = await supabase
     .from("orders")
@@ -80,9 +78,8 @@ export async function createOrderAction(input: unknown): Promise<CreateOrderResu
 
   if (orderErr || !order) {
     console.error("[createOrderAction] order insert failed:", orderErr);
-    return { success: false, error: "فشل في إنشاء الطلب", details: orderErr?.message || "unknown" };
+    return { success: false, error: "فشل في إنشاء الطلب" };
   }
-  console.log("[createOrderAction] order created:", order.id);
 
   const { error: itemsErr } = await supabase.from("order_items").insert({
     order_id: order.id,
@@ -93,9 +90,8 @@ export async function createOrderAction(input: unknown): Promise<CreateOrderResu
 
   if (itemsErr) {
     console.error("[createOrderAction] order_items insert failed:", itemsErr);
-    return { success: false, error: "فشل في إضافة المنتجات", details: itemsErr.message };
+    return { success: false, error: "فشل في إضافة المنتجات" };
   }
-  console.log("[createOrderAction] order_items created");
 
   revalidatePath("/admin/orders");
 
