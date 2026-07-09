@@ -48,6 +48,7 @@ export default function ProductDetailsClient({
         quantity,
         price: Number(product.price),
         total: Number(total),
+        title: product.title,
       });
 
       if (result.success) {

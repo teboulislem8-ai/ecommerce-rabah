@@ -93,6 +93,7 @@ export async function processPendingOrder(): Promise<{ whatsappUrl?: string; err
     quantity: pending.quantity,
     price: Number(pending.price),
     total: Number(pending.total),
+    title: pending.title,
   });
 
   if (result.success) {

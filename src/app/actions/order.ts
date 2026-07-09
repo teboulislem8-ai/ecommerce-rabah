@@ -9,6 +9,7 @@ const createOrderSchema = z.object({
   quantity: z.coerce.number().int().min(1).max(100),
   price: z.coerce.number().positive(),
   total: z.coerce.number().positive(),
+  title: z.string().min(1),
 });
 
 export type CreateOrderResult =
@@ -42,7 +43,7 @@ export async function createOrderAction(input: unknown): Promise<CreateOrderResu
     return { success: false, error: "الملف الشخصي لم يكتمل بعد، حاول مرة أخرى", details: profileErr?.message || "profile not found" };
   }
 
-  const { productId, quantity, price, total } = parsed.data;
+  const { productId, quantity, price, total, title } = parsed.data;
   console.log("[createOrderAction] creating order", { productId, quantity, price, total, userId: user.id, profile });
 
   const { data: address, error: addrErr } = await supabase
@@ -98,11 +99,12 @@ export async function createOrderAction(input: unknown): Promise<CreateOrderResu
 
   revalidatePath("/admin/orders");
 
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+213774029594";
+  const rawNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+213774029594";
+  const whatsappNumber = rawNumber.replace(/^\+/, "");
   const userName = profile?.username || "";
   const userCity = profile?.city || "";
   const userPhone = profile?.phone || "";
-  const productTitle = productId;
+  const productTitle = title;
   const msg = encodeURIComponent(
     `السلام عليكم ورحمة الله وبركاته، حبيت نأكد الطلب تاعي : ${productTitle} x${quantity} — DA ${total.toFixed(2)}. الاسم: ${userName}. الولاية: ${userCity}. الهاتف: ${userPhone}.`
   );
