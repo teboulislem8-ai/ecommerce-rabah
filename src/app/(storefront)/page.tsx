@@ -1,8 +1,10 @@
 import { Suspense } from "react";
+import { connection } from "next/server";
 import ClientProducts from "@/components/ClientProducts";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-export default function Home() {
+export default async function Home() {
+  await connection();
   console.log("[page] Home rendering start", Date.now());
   return (
     <ErrorBoundary>
